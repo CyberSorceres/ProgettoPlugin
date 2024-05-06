@@ -1,0 +1,35 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - "main"
+    paths-ignore:
+      - "*.md"
+      - LICENSE
+  pull_request:
+    branches:
+      - "main"
+    paths-ignore:
+    - "*.md"
+    - LICENSE
+    - "*.yaml"
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install npm/nodejs
+        uses: actions/setup-node@v4
+      - name: Install packages
+        run: npm ci
+      - name: Test
+        run: npm test
