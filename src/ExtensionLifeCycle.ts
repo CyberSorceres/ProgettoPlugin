@@ -15,6 +15,7 @@ export class ExtensionLifeCycle{
 		this.commands = new ExtensionCommands();
 	}
 
+
 	public deactivate(): void {
 		if(this.commands) {
 			this.commands.dispose();

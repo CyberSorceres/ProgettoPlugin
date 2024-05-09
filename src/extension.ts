@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 
-import { ExtensionLifeCycle } from "./extensionLifeCycle";
+import { ExtensionLifeCycle } from "./ExtensionLifeCycle";
 
 
 let ext: ExtensionLifeCycle | undefined;
