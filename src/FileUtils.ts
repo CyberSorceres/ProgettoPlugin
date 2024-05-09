@@ -4,6 +4,10 @@ import * as fs from 'fs';
 export class FileUtils {
 
     public folderExists(folderPath: string): boolean{
+        if (!folderPath || typeof folderPath !== 'string') {
+            throw new Error('Invalid folder path');
+        }
+
         try {
             return fs.statSync(folderPath).isDirectory();
         } catch (error) {
@@ -31,7 +35,7 @@ export class FileUtils {
         }
     }
 
-    public createFolder(folderPath: string){
+    public createFolder(folderPath: string, fileSystem: typeof fs = fs){
         try {
             fs.mkdirSync(folderPath);
             console.log(`Folder created at ${folderPath}`);
@@ -58,7 +62,7 @@ export class FileUtils {
         }
     }
 
-    public getActiveFilename(): string | undefined{
+    /*public getActiveFilename(): string | undefined{
         const editor = vscode.window.activeTextEditor;
         if (editor) {
             // Get the URI of the currently open file
@@ -72,5 +76,5 @@ export class FileUtils {
             // No file is currently open
             return undefined;
         }
-    }
+    }*/
 }
