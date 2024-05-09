@@ -5,9 +5,6 @@ import * as fs from "fs";
 import mockFs from 'mock-fs'
 import sinon from 'sinon';
 
-const fsStub = sinon.stub(fs);
-
-
 describe('FileUtils', () => {
   describe('folderExists method', () => {
     test('folderExists should return true if folder exists', () => {
@@ -82,19 +79,21 @@ describe('FileUtils', () => {
 
 
 describe('createFolder method', () => {
-  test('should create folder successfully', () => {
-    const fileUtils = new FileUtils();
-    const folderPath = '/path/to/newFolder';
+    test('should create folder successfully', () => {
+      // Mock the file system
+      mockFs({
+        '': {} // Make sure to create parent directories if necessary
+      });
 
-    // Stub mkdirSync method to return undefined
-    fsStub.mkdirSync.returns(undefined);
+      const fileUtils = new FileUtils();
+      const folderPath = '/path/to/newFolder';
 
-    // Call the createFolder method with the stubbed fs module
-    fileUtils.createFolder(folderPath, fsStub);
+      // Call the createFolder method
+      fileUtils.createFolder(folderPath, mockFs); // Pass the mocked fs object
 
-    // Assert that the mkdirSyncStub was called with the correct folderPath
-    sinon.assert.calledWith(fsStub.mkdirSync, folderPath);
-  });
+      // Assert that the folder was created
+      expect(mockFs.existsSync(folderPath)).toBe(true);
+    });
 
   /*test('should not throw error if folder already exists', () => {
     const fileUtils = new FileUtils();

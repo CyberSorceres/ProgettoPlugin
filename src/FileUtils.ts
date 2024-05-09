@@ -35,9 +35,9 @@ export class FileUtils {
         }
     }
 
-    public createFolder(folderPath: string, fileSystem: typeof fs = fs){
+    public createFolder(folderPath: string, fileSystem: typeof fs = fs) {
         try {
-            fs.mkdirSync(folderPath);
+            fileSystem.mkdirSync(folderPath); // Use fileSystem instead of fs
             console.log(`Folder created at ${folderPath}`);
         } catch (error) {
             console.error(`Error creating folder: ${error}`);
