@@ -28,6 +28,7 @@
     "test": "vitest"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.12",
     "@types/mocha": "^10.0.6",
     "@types/node": "18.x",
     "@types/sinon": "^17.0.3",
