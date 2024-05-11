@@ -1,6 +1,7 @@
 {
   "name": "progettoplugin",
   "displayName": "ProgettoPlugin",
+  "type" : "module",
   "description": "",
   "version": "0.0.1",
   "engines": {
