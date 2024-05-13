@@ -1,10 +1,16 @@
-export default import("vitest/config").then(({ defineConfig }) => {
+import { defineConfig } from 'vitest/config';
+import { resolve } from 'path'; // Ensure you import resolve from the correct path module
+
+export default defineConfig(async () => {
+    const config = await import('vitest/config');
+    const { defineConfig } = config;
+
     return defineConfig({
         test: {
-            globals: true,
-            environment: 'jsdom'
-        },
+            alias: {
+                // Map the 'vscode' import to your mock implementation
+                'vscode': resolve('/tests/vscode.mock.ts') // Adjust the path as needed
+            }
+        }
     });
-}).catch(error => {
-    console.error("Failed to import config:", error);
 });
