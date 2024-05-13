@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { TestConfigInterface } from "./TestConfigInterface";
-import { FileUtils } from './FileUtils';
+import { TestConfigInterface } from "./TestConfigInterface.js";
+//import { FileUtils } from './FileUtils.js';
 
 export class ViTestConfig implements TestConfigInterface{
     private configGenerated: boolean;
@@ -12,8 +12,9 @@ export class ViTestConfig implements TestConfigInterface{
     }
     
     runTests(): void {
-
-
+        const terminal = vscode.window.createTerminal('ViTest');
+        terminal.sendText('npm test', true);
+        terminal.show();
     }
 
     createConfiguration(directory: string): void {
