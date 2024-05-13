@@ -1,18 +1,42 @@
 import * as vscode from 'vscode';
-import { ExtensionCommands } from './ExtensionCommands';
+import { ExtensionCommands } from './ExtensionCommands.js';
+import { TestConfigInterface } from './TestConfigInterface.js';
+import { ViTestConfig } from './ViTestConfig.js';
 
 export class ExtensionLifeCycle{
 
 	private commands: ExtensionCommands | undefined;
 	private workingDirectory: string | undefined;
+	private testConfiguration: TestConfigInterface;
 
 	constructor() {
 		this.setWorkingDirectory();
 		this.activate();
+		this.workingDirectory = this.setWorkingDirectory();
+		this.testConfiguration = new ViTestConfig();
 	}
 
 	private activate(): void {
 		this.commands = new ExtensionCommands();
+		let dir: string | undefined;
+		dir = undefined;
+		try{
+			dir = this.getWorkingDirectory();
+		}
+		catch (error: unknown) {
+			if (error instanceof Error) {
+				vscode.window.showErrorMessage(error.message);
+			} else {
+				vscode.window.showErrorMessage("An unknown error occurred when trying to get the working directory");
+			}
+		}
+
+		if (dir != undefined) {
+			this.testConfiguration.createConfiguration(dir);
+		} else {
+			vscode.window.showErrorMessage("Unable to get the working directory. Try restarting the extension");
+		}
+
 	}
 
 
@@ -22,19 +46,34 @@ export class ExtensionLifeCycle{
 		}
 	}
 
-	public setWorkingDirectory(): void {
-		const folders = vscode.workspace.workspaceFolders;
-		if (folders && folders.length > 0) {
-			// Assuming you want to use the first workspace folder as the working directory
-			this.workingDirectory = folders[0].uri.fsPath;
-			vscode.window.showInformationMessage('Working directory set successfully.');
-		} else {
-			vscode.window.showErrorMessage('No workspace folders found.');
-		}
+	public setWorkingDirectory(): string | undefined{
+		let workDir: string | undefined;
+		vscode.window.showOpenDialog({
+			canSelectFiles: false,
+			canSelectFolders: true,
+			canSelectMany: false,
+			openLabel: 'Select Folder for your project'
+		}).then(uri => {
+			if (uri && uri.length > 0) {
+				// Use the selected folder URI as the working directory
+				workDir =  uri[0].fsPath;
+			} else {
+				vscode.window.showErrorMessage('No folder selected.');
+				workDir = undefined;
+			}
+		});
+
+		return workDir;
 	}
 
-	public getWorkingDirectory(): string | undefined {
-		return this.workingDirectory;
+	public getWorkingDirectory(): string{
+		if(this.workingDirectory != undefined){
+			return this.workingDirectory;
+		}
+		else{
+			throw new Error("Working directory is undefined");
+			
+		}
 	}
 	
 }
