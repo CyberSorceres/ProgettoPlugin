@@ -5,19 +5,19 @@ import { ViTestConfig } from './ViTestConfig.js';
 
 export class ExtensionLifeCycle{
 
-	private commands: ExtensionCommands | undefined;
+	private commands: ExtensionCommands;
 	private workingDirectory: string | undefined;
-	private testConfiguration: TestConfigInterface;
+	private testConfiguration: ViTestConfig;
 
 	constructor() {
 		this.setWorkingDirectory();
 		this.activate();
 		this.workingDirectory = this.setWorkingDirectory();
 		this.testConfiguration = new ViTestConfig();
+		this.commands = new ExtensionCommands(this.testConfiguration);
 	}
 
 	private activate(): void {
-		this.commands = new ExtensionCommands();
 		let dir: string | undefined;
 		dir = undefined;
 		try{
