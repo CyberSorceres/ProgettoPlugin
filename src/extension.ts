@@ -7,7 +7,7 @@ let ext: ExtensionLifeCycle | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
     ext = new ExtensionLifeCycle();
-    context.subscriptions.push(ext);
+    ext.activate();
 }
 
 export function deactivate() {

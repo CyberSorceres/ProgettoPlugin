@@ -7,17 +7,17 @@ export class ExtensionLifeCycle{
 
 	private commands: ExtensionCommands;
 	private workingDirectory: string | undefined;
-	private testConfiguration: ViTestConfig;
+	private testConfiguration: TestConfigInterface;
 
 	constructor() {
 		this.setWorkingDirectory();
 		this.activate();
 		this.workingDirectory = this.setWorkingDirectory();
-		this.testConfiguration = new ViTestConfig();
+		this.testConfiguration = new ViTestConfig(); //Choosing vitest as test runner
 		this.commands = new ExtensionCommands(this.testConfiguration);
 	}
 
-	private activate(): void {
+	public activate(): void {
 		let dir: string | undefined;
 		dir = undefined;
 		try{

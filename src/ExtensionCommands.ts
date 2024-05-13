@@ -1,14 +1,15 @@
 import * as vscode from 'vscode';
 import { ViTestConfig } from './ViTestConfig.js';
+import { TestConfigInterface } from './TestConfigInterface.js';
 
 export class ExtensionCommands {
     private readonly disposables: vscode.Disposable[] = [];
 
-    constructor(testConfig: ViTestConfig) {
+    constructor(testConfig: TestConfigInterface) {
         this.registerCommands(testConfig);
     }
 
-    private registerCommands(testConfig: ViTestConfig): void {
+    private registerCommands(testConfig: TestConfigInterface): void {
         this.disposables.push(
             vscode.commands.registerCommand('extension.runTests', () => {
 
