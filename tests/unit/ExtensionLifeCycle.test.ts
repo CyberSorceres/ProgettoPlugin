@@ -1,7 +1,7 @@
-import * as vscode from 'vscode';
+import * as vscode from 'vscode'
 import { ExtensionLifeCycle } from "../../src/ExtensionLifeCycle";
 import mockFs from 'mock-fs'
-import { beforeEach } from 'vitest';
+import { beforeEach, expect, describe, test} from 'vitest';
 
 describe('setWorkingDirectory', () => {
     let ELC : ExtensionLifeCycle;

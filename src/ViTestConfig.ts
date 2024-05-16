@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { TestConfigInterface } from "./TestConfigInterface.js";
+import { TestConfigInterface } from "./TestConfigInterface";
 //import { FileUtils } from './FileUtils.js';
 
 export class ViTestConfig implements TestConfigInterface{

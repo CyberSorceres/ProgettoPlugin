@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
-import { ViTestConfig } from './ViTestConfig.js';
-import { TestConfigInterface } from './TestConfigInterface.js';
+import { TestConfigInterface } from './TestConfigInterface';
 
 export class ExtensionCommands {
     private readonly disposables: vscode.Disposable[] = [];

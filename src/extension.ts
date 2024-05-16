@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 
-import { ExtensionLifeCycle } from "./ExtensionLifeCycle.js";
+import { ExtensionLifeCycle } from "./ExtensionLifeCycle";
 
 
 let ext: ExtensionLifeCycle | undefined;
@@ -8,6 +8,7 @@ let ext: ExtensionLifeCycle | undefined;
 export function activate(context: vscode.ExtensionContext) {
     ext = new ExtensionLifeCycle();
     ext.activate();
+
 }
 
 export function deactivate() {

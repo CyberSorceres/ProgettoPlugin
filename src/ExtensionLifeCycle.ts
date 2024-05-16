@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { ExtensionCommands } from './ExtensionCommands.js';
-import { TestConfigInterface } from './TestConfigInterface.js';
-import { ViTestConfig } from './ViTestConfig.js';
+import { ExtensionCommands } from './ExtensionCommands';
+import { TestConfigInterface } from './TestConfigInterface';
+import { ViTestConfig } from './ViTestConfig';
 
 export class ExtensionLifeCycle{
 

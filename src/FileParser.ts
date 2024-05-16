@@ -6,8 +6,9 @@ export class FileParser {
     constructor(doc: vscode.TextDocument){
         this.document = doc;
     }
-
+	/*
     public ParseFile() : UserStory[]{
+
     const userStories: UserStory[] = []; //from lib create US
 	const projectTagRegex = /@PROJECT-(\d+)/g;
 	const initialTagRegex = /@USERSTORY-(\d+)/g;
@@ -72,5 +73,5 @@ export class FileParser {
 	//return the user stories and the error report, if the error report is undefined, the file was parsed without errors, then return "No errors found"
 	return [userStories, report === '' ? 'No errors found' : report];
 
-    }
+    }*/
     }
