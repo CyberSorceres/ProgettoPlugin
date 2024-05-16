@@ -7,7 +7,7 @@ import { ExtensionCommands } from '../../src/ExtensionCommands';
 suite('ExtensionCommands Test Suite', () => {
 
     test('Commands registration', () => {
-        const extensionCommands = new ExtensionCommands();
+        //const extensionCommands = new ExtensionCommands();
 
         /*const registerCommandStub = sinon.stub(vscode.commands, 'registerCommand');
         extensionCommands.dispose();

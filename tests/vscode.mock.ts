@@ -1,5 +1,5 @@
 // vscode.mock.ts
-
+/*
 interface WorkspaceFolder {
     uri: {
         fsPath: string;
@@ -31,3 +31,4 @@ export const vscode = {
 };
 
 export default vscode;
+*/
