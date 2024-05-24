@@ -6,7 +6,7 @@ import { beforeEach, expect, describe, test} from 'vitest';
 describe('setWorkingDirectory', () => {
     let ELC : ExtensionLifeCycle;
     beforeEach (() => {
-        ELC = new ExtensionLifeCycle();
+        ELC = new ExtensionLifeCycle(vscode.ExtensionContext);
     });
 test('Test quando ci sono cartelle di lavoro presenti', async () => {
     //Crea un mock per vscode.workspace.workspaceFolders
@@ -32,7 +32,7 @@ test('Test quando non ci sono cartelle di lavoro presenti', async () => {
 describe('getWorkingDirectory', () => { 
     let ELC : ExtensionLifeCycle;
     beforeEach (() => {
-        ELC = new ExtensionLifeCycle();
+        ELC = new ExtensionLifeCycle(vscode.ExtensionContext);
     });
     test('restituisce undefined quando workingDirectory non è definito', () => {
         expect(ELC.getWorkingDirectory()).toBeUndefined();

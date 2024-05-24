@@ -16,6 +16,9 @@ export class ExtensionCommands {
             }),
             vscode.commands.registerCommand('extension.generateTest', () => {
                 testConfig.generateTest();
+            }),
+            vscode.commands.registerCommand('extension.login', () => {
+                //api.login();
             })
         );
     }

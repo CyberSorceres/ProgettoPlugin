@@ -9,7 +9,7 @@ export default defineConfig(async () => {
         test: {
             alias: {
                 // Map the 'vscode' import to your mock implementation
-                'vscode': resolve('/tests/vscode.mock.ts') // Adjust the path as needed
+                //'vscode': resolve('/tests/vscode.mock.ts') // Adjust the path as needed
             }
         }
     });

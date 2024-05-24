@@ -1,6 +1,5 @@
 // vscode.mock.ts
-
-interface WorkspaceFolder {
+/*interface WorkspaceFolder {
     uri: {
         fsPath: string;
     };
@@ -11,7 +10,7 @@ const workspaceFolders: WorkspaceFolder[] = [];
 
 const showErrorMessage = function() {
 
-    showErrorMessage.calls.push({  });
+   // showErrorMessage.calls.push({  });
 
 };
 
@@ -31,3 +30,4 @@ export const vscode = {
 };
 
 export default vscode;
+*/

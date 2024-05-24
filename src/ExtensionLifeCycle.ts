@@ -1,79 +1,85 @@
 import * as vscode from 'vscode';
+import * as lib from 'progettolib'
 import { ExtensionCommands } from './ExtensionCommands';
 import { TestConfigInterface } from './TestConfigInterface';
 import { ViTestConfig } from './ViTestConfig';
+import { LoginViewProvider } from './LoginViewProvider';
 
-export class ExtensionLifeCycle{
+export class ExtensionLifeCycle {
+    private commands: ExtensionCommands | undefined;
+    private workingDirectory: string | undefined;
+    private testConfiguration: TestConfigInterface | undefined;
+    private _api: lib.API_interface;
 
-	private commands: ExtensionCommands;
-	private workingDirectory: string | undefined;
-	private testConfiguration: TestConfigInterface;
+    constructor(private readonly context: vscode.ExtensionContext, api: lib.API_interface) {
+        this._api = api;
+        this.activate();
+    }
 
-	constructor() {
-		this.setWorkingDirectory();
-		this.activate();
-		this.workingDirectory = this.setWorkingDirectory();
-		this.testConfiguration = new ViTestConfig(); //Choosing vitest as test runner
-		this.commands = new ExtensionCommands(this.testConfiguration);
-	}
+    public get api(): lib.API_interface{
+        return(this._api);
+    }
 
-	public activate(): void {
-		let dir: string | undefined;
-		dir = undefined;
-		try{
-			dir = this.getWorkingDirectory();
-		}
-		catch (error: unknown) {
-			if (error instanceof Error) {
-				vscode.window.showErrorMessage(error.message);
-			} else {
-				vscode.window.showErrorMessage("An unknown error occurred when trying to get the working directory");
-			}
-		}
+    private async activate(): Promise<void> {
+        console.log('Activating Extension');
+        try {
+            this.workingDirectory = await this.setWorkingDirectory();
+            if (!this.workingDirectory) {
+                throw new Error("Working directory is undefined");
+            }
 
-		if (dir != undefined) {
-			this.testConfiguration.createConfiguration(dir);
-		} else {
-			vscode.window.showErrorMessage("Unable to get the working directory. Try restarting the extension");
-		}
+            this.testConfiguration = new ViTestConfig();
+            this.testConfiguration.createConfiguration(this.workingDirectory);
+            this.commands = new ExtensionCommands(this.testConfiguration);
 
-	}
+            // Register the login view provider
+            const loginViewProvider = new LoginViewProvider(this.context);
 
+            loginViewProvider.setApi(this.api);
 
-	public deactivate(): void {
-		if(this.commands) {
-			this.commands.dispose();
-		}
-	}
+            this.context.subscriptions.push(
+                vscode.window.registerWebviewViewProvider(
+                    LoginViewProvider.viewType,
+                    loginViewProvider
+                )
+            );          
 
-	public setWorkingDirectory(): string | undefined{
-		let workDir: string | undefined;
-		vscode.window.showOpenDialog({
-			canSelectFiles: false,
-			canSelectFolders: true,
-			canSelectMany: false,
-			openLabel: 'Select Folder for your project'
-		}).then(uri => {
-			if (uri && uri.length > 0) {
-				// Use the selected folder URI as the working directory
-				workDir =  uri[0].fsPath;
-			} else {
-				vscode.window.showErrorMessage('No folder selected.');
-				workDir = undefined;
-			}
-		});
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                vscode.window.showErrorMessage(error.message);
+            } else {
+                vscode.window.showErrorMessage("An unknown error occurred during activation.");
+            }
+        }
+    }
 
-		return workDir;
-	}
+    public deactivate(): void {
+        if (this.commands) {
+            this.commands.dispose();
+        }
+    }
 
-	public getWorkingDirectory(): string{
-		if(this.workingDirectory != undefined){
-			return this.workingDirectory;
-		}
-		else{
-			throw new Error("Working directory is undefined");
-			
-		}
-	}
-	
+    private async setWorkingDirectory(): Promise<string | undefined> {
+        const uri = await vscode.window.showOpenDialog({
+            canSelectFiles: false,
+            canSelectFolders: true,
+            canSelectMany: false,
+            openLabel: 'Select Folder for your project'
+        });
+
+        if (uri && uri.length > 0) {
+            return uri[0].fsPath;
+        } else {
+            vscode.window.showErrorMessage('No folder selected.');
+            return undefined;
+        }
+    }
+
+    public getWorkingDirectory(): string {
+        if (this.workingDirectory) {
+            return this.workingDirectory;
+        } else {
+            throw new Error("Working directory is undefined");
+        }
+    }
 }
