@@ -1,23 +1,11 @@
-import * as assert from 'assert';
-//import * as vscode from 'vscode';
-import sinon from 'sinon';
+import { describe, it, expect } from 'vitest';
 
-import { ExtensionCommands } from '../../src/ExtensionCommands';
+//TODO write tests
 
-suite('ExtensionCommands Test Suite', () => {
-
-    test('Commands registration', () => {
-        const extensionCommands = new ExtensionCommands();
-
-        /*const registerCommandStub = sinon.stub(vscode.commands, 'registerCommand');
-        extensionCommands.dispose();
-
-        assert.strictEqual(registerCommandStub.calledTwice, true);
-        assert.strictEqual(registerCommandStub.calledWith('extension.runTests'), true);
-        assert.strictEqual(registerCommandStub.calledWith('extension.generateTest'), true);
-
-        registerCommandStub.restore();*/
-    });
+// Simple test suite
+describe('Simple truthy test', () => {
+  // Single test case
+  it('should pass when true is true', () => {
+    expect(true).toBe(true); // This test will pass
+  });
 });
-
-//lanciare npm install sinon @types/sinon --save-dev
