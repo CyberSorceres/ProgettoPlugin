@@ -2,6 +2,7 @@
   "name": "progettoplugin",
   "displayName": "ProgettoPlugin",
   "description": "",
+  "icon": "./resources/icon.png",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.89.0"
@@ -15,8 +16,8 @@
       "activitybar": [
         {
           "id": "extension-views",
-          "title": "Extension Views",
-          "icon": "./resources/icon.png"
+          "title": "User Story Extension",
+          "icon": "./resources/icon.svg"
         }
       ]
     },
@@ -25,7 +26,7 @@
         {
           "type": "webview",
           "id": "extension.loginView",
-          "name": "Login"
+          "name": ""
         }
       ]
     },
