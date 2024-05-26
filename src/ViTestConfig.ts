@@ -23,9 +23,9 @@ export class ViTestConfig implements TestConfigInterface{
     }
 
     private writeTestFile(US: lib.UserStory){
-        const testDir = path.join(this.dir, 'TEST')
-        vscode.window.showInformationMessage('writing test');
         const fileUt = new FileUtils();
+
+        const testDir = path.join(this.dir, 'TEST');
         const fileName: string = `UserStory_${US.tag}.test.ts`;
         const filePath = path.join(testDir, fileName);
         if(!fileUt.folderExists(testDir)){
@@ -96,18 +96,19 @@ export class ViTestConfig implements TestConfigInterface{
             [PROJ, US] = [lib.exampleProjects[1], lib.exampleUserStories[1]];
             
             if(PROJ !== undefined && US !== undefined){
+                let prompt = " generate a test file with many test for this user story, with description: " + US.description + '\nand with this code '+ US.test.UScode + 'Using Vitest.';
+                let response: string;
                 switch(PROJ.ai){
                 case lib.AI.Bedrock:
-                    let prompt = " generate a test for userStory  with description: " + US.description + US.test.UScode;
-                    const response = await api.bedrock(prompt);
+                    response = await api.bedrock(prompt);
                     break;
                 case lib.AI.ChatGPT:
                     //TODO
+                    //const response = await api.chatGPT(prompt);
+                    response = '';
                     break;
-
-                //US.test.testCode = response;
-
                 }
+                US.test.testCode = response;
 
                 this.writeTestFile(US);
             }

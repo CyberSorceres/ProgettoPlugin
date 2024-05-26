@@ -29,7 +29,7 @@ export class ExtensionLifeCycle {
         this._userStories = await this._api.getUserStoriesAssignedToUser();
     }
 
-    public async generateTest(tag: 'string'){
+    public async generateTest(tag: string){
         this.testConfiguration?.generateTest(tag, this.api);
     }
     

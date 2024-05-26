@@ -42,7 +42,6 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
                     }
                 }
                 if(message.type === 'generateTest'){
-                    vscode.window.showInformationMessage(`Generate test for US with tag: ${message.usTag}`);
                     this.extLifeCycle.generateTest(message.usTag);
                 }
             },
