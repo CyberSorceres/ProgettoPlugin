@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import * as lib from 'progettolib'
+import * as lib from 'progettolib';
 import { ExtensionLifeCycle } from './ExtensionLifeCycle';
 
 export class SidePanelViewProvider implements vscode.WebviewViewProvider {
@@ -7,54 +7,50 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
     private _api?: lib.API_interface;
     private extLifeCycle: ExtensionLifeCycle;
-    
+
     constructor(private readonly context: vscode.ExtensionContext, extLifeCycle: ExtensionLifeCycle) {
         this.extLifeCycle = extLifeCycle;
     }
-    
-    public setApi(api: lib.API_interface){
+
+    public setApi(api: lib.API_interface) {
         this._api = api;
     }
-    
+
     public resolveWebviewView(
         webviewView: vscode.WebviewView,
         context: vscode.WebviewViewResolveContext,
         _token: vscode.CancellationToken
     ): void {
         this._view = webviewView;
-        
+
         webviewView.webview.options = {
             enableScripts: true
         };
-        
+
         webviewView.webview.html = this.getLoginView(webviewView.webview);
-        
+
         webviewView.webview.onDidReceiveMessage(
             async message => {
                 if (message.type === 'login') {
-                    const loginSuccsessfull =  await this.callLogin(message.email, message.password);
-                    if(loginSuccsessfull){
-                        //const US = this.extLifeCycle.getUserStoriesFromDB();
+                    const loginSuccsessfull = await this.callLogin(message.email, message.password);
+                    if (loginSuccsessfull) {
                         const userStories = lib.exampleUserStories;
-                        
-                        
-                        webviewView.webview.html = this.getLoggedInView(webviewView.webview, userStories, message.email);//TODO switch to US 
+                        webviewView.webview.html = this.getLoggedInView(webviewView.webview, userStories, message.email);
                     }
                 }
-                if(message.type === 'generateTest'){
+                if (message.type === 'generateTest') {
                     this.extLifeCycle.generateTest(message.usTag);
+                }
+                if (message.type === 'syncTest') {
+                    await vscode.commands.executeCommand('yourExtension.syncTest', message.userStoryId);
                 }
             },
             undefined,
             this.context.subscriptions
         );
     }
-    
-    /* private getHtmlForWebview(webview: vscode.Webview): string {
-        
-    } */
-    
-    private getLoginView(webview: vscode.Webview): string{
+
+    private getLoginView(webview: vscode.Webview): string {
         return `
         <!DOCTYPE html>
         <html lang="en">
@@ -146,8 +142,8 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
         </html>
         `;
     }
-    
-    private getLoggedInView(webview: vscode.Webview, userStories: lib.UserStory[] | undefined, username: string): string{
+
+    private getLoggedInView(webview: vscode.Webview, userStories: lib.UserStory[] | undefined, username: string): string {
         let userStoriesHtml;
 
         if (userStories === undefined) {
@@ -161,14 +157,17 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
                     ${story.verified ? '<i class="fas fa-check-circle" style="color: #54d77a;"></i>' : '<i class="fas fa-times-circle" style="color: #ff694e;"></i>'}
                     <span style="margin-left: 10px;">User Story #${story.tag}</span>
                 </span>
-                <button class="generate-test-btn" data-tag="${story.tag}">Generate Test</button>
+                <div>
+                    <button class="generate-test-btn" data-tag="${story.tag}">Generate Test</button>
+                    <button class="sync-test-btn" data-id="${story.id}">Sync Test</button>
+                </div>
             </span>
             </summary>
             <p>${story.description}</p>
             </details>
             `).join('');
         }
-    
+
         return `
         <!DOCTYPE html>
         <html lang="en">
@@ -237,15 +236,16 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
             margin: 0;
             padding-top: 10px;
         }
-        button.generate-test-btn {
+        button {
             padding: 5px 10px;
             background-color: #007acc;
             color: white;
             border: none;
             border-radius: 3px;
             cursor: pointer;
+            margin-left: 5px;
         }
-        button.generate-test-btn:hover {
+        button:hover {
             background-color: #005a9e;
         }
         </style>
@@ -267,29 +267,34 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
                 });
             });
         });
+        document.querySelectorAll('.sync-test-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const id = button.getAttribute('data-id');
+                vscode.postMessage({
+                    type: 'syncTest',
+                    userStoryId: id
+                });
+            });
+        });
         </script>
         </body>
         </html>
         `;
     }
-    
+
     private async callLogin(email: string, password: string): Promise<Boolean> {
-        
-        const loginSuccessful = await Promise.resolve(this._api?.login(email,password));
-        
-        if(loginSuccessful){
+        const loginSuccessful = await Promise.resolve(this._api?.login(email, password));
+
+        if (loginSuccessful) {
             vscode.window.showInformationMessage('Logged in correctly');
             return true;
-            
             //TODO
             //hide login panel
             //show user name
             //show user story list
-        }
-        else{
+        }else{
             vscode.window.showErrorMessage('Error during login, please try again');
             return false;
         }
     }
-    
 }

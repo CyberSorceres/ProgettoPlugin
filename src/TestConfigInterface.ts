@@ -5,4 +5,6 @@ export interface TestConfigInterface {
     createConfiguration(directory: string): void;
 
     generateTest(tag: string, api: lib.API_interface): void;
+
+    syncTestStatus(userStoryId: string): void;
 }

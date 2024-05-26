@@ -19,6 +19,10 @@ export class ExtensionCommands {
             }),
             vscode.commands.registerCommand('extension.login', () => {
                 //api.login();
+            }),
+
+            vscode.commands.registerCommand('extension.syncTest', () => {
+                testConfig.syncTestStatus('ID');
             })
         );
     }

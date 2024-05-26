@@ -6,6 +6,7 @@ import { userInfo } from 'os';
 import * as lib from 'progettolib'
 import { FileParser } from './FileParser';
 import { FileUtils } from './FileUtils';
+import { exec } from 'child_process';
 
 export class ViTestConfig implements TestConfigInterface{
     private configGenerated: boolean;
@@ -148,5 +149,32 @@ export class ViTestConfig implements TestConfigInterface{
     
         fs.writeFileSync(packageJsonPath, packageJsonContent);
         vscode.window.showInformationMessage('package.json created successfully.');
+    }
+
+
+    //Funzione per sincronizzare stato UserStory con DB
+    async syncTestStatus(userStoryId: string) {
+        try {
+            const result = await this.runTestAndGetResult(userStoryId); //fa partire il test solo della user story corrispondente al bottone sync
+            //await updateUserStoryStatus(userStoryId, result); Da implementare API per la modifica dello stato della UserStory dato l'ID e il nuovo stato(bool)
+            vscode.window.showInformationMessage(`User story ${userStoryId} status updated to ${result ? "passato" : "non passato"}.`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to update user story ${userStoryId}: ${error.message}`);
+        }
+    }
+
+    private async runTestAndGetResult(userStoryId: string): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            const testCommand = `npx vitest run --testNamePattern=UserStory_${userStoryId}`;
+            exec(testCommand, (error, stdout, stderr) => {
+                if (error) {
+                    vscode.window.showErrorMessage(`Error running test for user story ${userStoryId}: ${stderr}`);
+                    return reject(false);
+                }
+                // Analizzare l'output per determinare se il test è passato o fallito
+                const testPassed = stdout.includes('passed'); // Modifica questo controllo in base all'output di Vitest
+                resolve(testPassed);
+            });
+        });
     }
 }
