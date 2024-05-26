@@ -10,78 +10,63 @@ export class FileParser {
 		this.api = api;
 	}
 	
-	public async ParseFile(): Promise<[lib.Progetto | undefined, lib.UserStory[] | undefined]>{
-		
+	public async parseFile(tag: string): Promise<[lib.Progetto | undefined, lib.UserStory | undefined]> {
 		const projectTagRegex = /@PROJECT-(\d+)/g;
-		const initialTagRegex = /@USERSTORY-(\d+)/g;
+		const initialTagRegex = new RegExp(`@USERSTORY-${tag}`, 'g');
 		const endTagRegex = /@USERSTORY-END/g;
-		let project: lib.Progetto;
-		let userStories: lib.UserStory[] = [];
-		let tagNumber: string = '';
-		
-		let loadingContent = false;
-		let currentLineLogged = 0;
-		
-		//first line of the file must contain project tag
+	
+		let project: lib.Progetto | undefined;
+		let userStory: lib.UserStory | undefined;
+		let foundTag = false;
+		let userStoryContent: string[] = [];
+	
+		// First line of the file must contain project tag
 		const firstLine = this.document.lineAt(0).text;
-		if(projectTagRegex.test(firstLine)) {
-			const projectId = firstLine.match(projectTagRegex)![0].split('-')[1];
+		const projectMatch = firstLine.match(projectTagRegex);
+		
+		if (projectMatch) {
+			const projectId = projectMatch[0].split('-')[1];
 			project = await this.api.getProgetto(projectId);
-			if(!project){
-				vscode.window.showErrorMessage(`No Project with this id fonund: ${projectId}`);
+			
+			if (!project) {
+				vscode.window.showErrorMessage(`No project with this ID found: ${projectId}`);
 				return [undefined, undefined];
 			}
-
-		}
-		else {
-			vscode.window.showErrorMessage('No project id found: the project id must appear in the first line of the document');
+		} else {
+			vscode.window.showErrorMessage('No project ID found: the project ID must appear in the first line of the document');
 			return [undefined, undefined];
 		}
-		
-		//for each line in the file check if it contains a start tag, startting on the second line
+	
+		// For each line in the file, check if it contains a start tag, starting on the second line
 		for (let i = 1; i < this.document.lineCount; i++) {
-			const line = this.document.lineAt(i);
-			const text = line.text;
-			let userStoryCode: string = '';
+			const lineText = this.document.lineAt(i).text;
 			
-			switch(true) {
-				case endTagRegex.test(text): //found an END tag
-				if(loadingContent) { //if I'm already loading content, stop loading the content -> I found the end tag
-					//US = his.api.getUserStoryByTag(tagNumber)?.test.setUScode(userStoryCode);
-					//US.Test.SetCOde(userStoryCode);
-					//userStories.push(US);
-					loadingContent = false;
-					userStoryCode = '';
-					if(currentLineLogged === 0) {
-						throw new Error('No content found for user story');
-					}
+			if (foundTag) {
+				// If we already found the start tag, collect lines until we find the end tag
+				if (endTagRegex.test(lineText)) {
+					break;
+				} else {
+					userStoryContent.push(lineText);
 				}
-				else { //if I'm not loading content, report an error, -> I found an end tag before a start tag
-					throw new Error(`End tag found before start tag on line ${i+1}`);
-				}
-				break;
-				case initialTagRegex.test(text): //found a START tag
-				if(loadingContent) { //if the line contains a start tag and im already loading content, report an error -> I found a start tag before an end tag
-					throw new Error(`Start tag found before end tag on line ${i+1}`);
-					
-				}
-				else { //if the line contains a start tag and im not loading content, start loading the content -> I found a new user story
-					tagNumber = text.match(initialTagRegex)![0].split('-')[1];
-					loadingContent = true;
-					currentLineLogged = 0;
-				}
-				break;
-				default: //found CONTENT
-				if(loadingContent) { //if im loading content, add the line to the user story code
-					userStoryCode += text;
-					currentLineLogged++;
-				}
-				break;
+			} else if (initialTagRegex.test(lineText)) {
+				// If this line contains the start tag we're looking for
+				foundTag = true;
 			}
-			
 		}
+	
+		if (foundTag && userStoryContent.length > 0) {
+			// Create a new UserStory object with the collected content
+			//userStory = this.api.getUserStoryByTag(tag);
+			const userStoryContentString = userStoryContent.join('\n')
+			userStory = lib.exampleUserStories[1];
 
-		return [project, userStories];
-		
+			userStory.test.UScode = userStoryContentString;
+
+		} else {
+			vscode.window.showErrorMessage(`User story with tag ${tag} not found in the document.`);
+		}
+	
+		return [project, userStory];
 	}
+	
 }
