@@ -55,7 +55,7 @@ export class ExtensionLifeCycle {
                 throw new Error("Working directory is undefined");
             }
             
-            this.testConfiguration = new ViTestConfig();
+            this.testConfiguration = new ViTestConfig(this.workingDirectory);
             this.testConfiguration.createConfiguration(this.workingDirectory);
             this.commands = new ExtensionCommands(this.testConfiguration);
             

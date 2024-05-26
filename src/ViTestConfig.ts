@@ -9,9 +9,11 @@ import { FileUtils } from './FileUtils';
 
 export class ViTestConfig implements TestConfigInterface{
     private configGenerated: boolean;
+    private dir: string;
 
-    constructor(){
+    constructor(dir: string){
         this.configGenerated = false;
+        this.dir = dir;
     }
     
     runTests(): void {
@@ -21,10 +23,13 @@ export class ViTestConfig implements TestConfigInterface{
     }
 
     private writeTestFile(US: lib.UserStory){
+        const testDir = path.join(this.dir, 'TEST')
+        vscode.window.showInformationMessage('writing test');
         const fileUt = new FileUtils();
-        const filePath: string = `./TEST/UserStory_${US.tag}.test.ts`;
-        if(!fileUt.folderExists('./TEST')){
-            fileUt.createFolder('./TEST')
+        const fileName: string = `UserStory_${US.tag}.test.ts`;
+        const filePath = path.join(testDir, fileName);
+        if(!fileUt.folderExists(testDir)){
+            fileUt.createFolder(testDir)
         }
         if(!fileUt.fileExists(filePath)){
             fileUt.createFile(filePath);
@@ -80,13 +85,15 @@ export class ViTestConfig implements TestConfigInterface{
         const document = editor.document;
 
 
-        if(api.loggedIn()){
+        if(!api.loggedIn()){
             vscode.window.showErrorMessage('Cannot generate test: You are not logged in.');
         }
         else{
             let PROJ: lib.Progetto | undefined;
             let US: lib.UserStory | undefined;
-            [PROJ, US] = await new FileParser(document, api).parseFile(UStag);
+            //[PROJ, US] = await new FileParser(document, api).parseFile(UStag);
+
+            [PROJ, US] = [lib.exampleProjects[1], lib.exampleUserStories[1]];
             
             if(PROJ !== undefined && US !== undefined){
                 switch(PROJ.ai){
@@ -100,8 +107,9 @@ export class ViTestConfig implements TestConfigInterface{
 
                 //US.test.testCode = response;
 
-                this.writeTestFile(US as lib.UserStory);
                 }
+
+                this.writeTestFile(US);
             }
             else{
                 vscode.window.showErrorMessage('Cannot generate test: Project or UserStory not found.');
