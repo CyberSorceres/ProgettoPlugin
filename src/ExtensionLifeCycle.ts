@@ -28,6 +28,10 @@ export class ExtensionLifeCycle {
     public async  getUserStoriesFromDB() {
         this._userStories = await this._api.getUserStoriesAssignedToUser();
     }
+
+    public async generateTest(tag: 'string'){
+        this.testConfiguration?.generateTest(tag, this.api);
+    }
     
     private showSidePanel(context: vscode.ExtensionContext){
         const sidePanelViewProvider = new SidePanelViewProvider(this.context, this);

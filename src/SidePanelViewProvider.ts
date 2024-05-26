@@ -36,14 +36,14 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
                     if(loginSuccsessfull){
                         //const US = this.extLifeCycle.getUserStoriesFromDB();
                         const userStories = lib.exampleUserStories;
-
+                        
                         
                         webviewView.webview.html = this.getLoggedInView(webviewView.webview, userStories, message.email);//TODO switch to US 
                     }
                 }
                 if(message.type === 'generateTest'){
-                    vscode.window.showInformationMessage(`Generate test for US with tag: ${message.tag}`);
-                    //generateTest(message.tag)
+                    vscode.window.showInformationMessage(`Generate test for US with tag: ${message.usTag}`);
+                    this.extLifeCycle.generateTest(message.usTag);
                 }
             },
             undefined,
@@ -150,125 +150,127 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
     
     private getLoggedInView(webview: vscode.Webview, userStories: lib.UserStory[] | undefined, username: string): string{
         let userStoriesHtml;
-  
+
         if (userStories === undefined) {
-          userStoriesHtml = '<p>Error loading the user stories assigned to you.</p>';
+            userStoriesHtml = '<p>Error loading the user stories assigned to you.</p>';
         } else {
-          userStoriesHtml = userStories.map(story => `
+            userStoriesHtml = userStories.map(story => `
             <details>
-              <summary>
-                <span style="margin-right: 10px;">
-                  ${story.verified ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-times-circle"></i>'}
+            <summary>
+            <span style="display: flex; justify-content: space-between; width: 100%;">
+                <span style="display: flex; align-items: center;">
+                    ${story.verified ? '<i class="fas fa-check-circle" style="color: #54d77a;"></i>' : '<i class="fas fa-times-circle" style="color: #ff694e;"></i>'}
+                    <span style="margin-left: 10px;">User Story #${story.tag}</span>
                 </span>
-                <span>User Story #${story.tag}</span>
-              </summary>
-              <p>${story.description}</p>
-              <button class="generate-test-btn" data-tag="${story.tag}">Generate Test</button>
+                <button class="generate-test-btn" data-tag="${story.tag}">Generate Test</button>
+            </span>
+            </summary>
+            <p>${story.description}</p>
             </details>
-          `).join('');
+            `).join('');
         }
-      
+    
         return `
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>User Stories</title>
-          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-          <style>
-          body {
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-              background-color: #1e1e1e;
-              color: #d4d4d4;
-              margin: 0;
-              padding: 0;
-              display: flex;
-              flex-direction: column;
-              height: 100vh;
-          }
-          .container {
-              width: 100%;
-              max-width: 600px;
-              margin: 0 auto;
-              padding: 20px;
-              box-sizing: border-box;
-              background-color: #252526;
-              border: none;
-              box-shadow: 0 0 10px rgba(0,0,0,0.5);
-              flex: 1;
-              display: flex;
-              flex-direction: column;
-          }
-          h1 {
-              color: #569cd6;
-              text-align: center;
-              margin-bottom: 20px;
-              margin-top: 0;
-              font-size: 1.5em;
-          }
-          h2 {
-              color: #9cdcfe;
-              margin-bottom: 20px;
-              font-size: 1.2em;
-          }
-          details {
-              background-color: #3c3c3c;
-              border: 1px solid #3c3c3c;
-              border-radius: 3px;
-              margin-bottom: 10px;
-              padding: 10px;
-          }
-          summary {
-              cursor: pointer;
-              font-weight: bold;
-              display: flex;
-              align-items: center;
-          }
-          summary::-webkit-details-marker {
-              display: inline-block;
-          }
-          summary span:first-child {
-              margin-right: 10px;
-          }
-          p {
-              margin: 0;
-              padding-top: 10px;
-          }
-          button.generate-test-btn {
-              margin-top: 10px;
-              padding: 5px 10px;
-              background-color: #007acc;
-              color: white;
-              border: none;
-              border-radius: 3px;
-              cursor: pointer;
-          }
-          button.generate-test-btn:hover {
-              background-color: #005a9e;
-          }
-          </style>
-          </head>
-          <body>
-          <div class="container">
-          <h1>Welcome, ${username}</h1>
-          <h2>Your assigned user stories:</h2>
-          ${userStoriesHtml}
-          </div>
-          <script>
-          const vscode = acquireVsCodeApi();
-          document.querySelectorAll('.generate-test-btn').forEach(button => {
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>User Stories</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #252526;
+            border: none;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        h1 {
+            color: #569cd6;
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 0;
+            font-size: 1.5em;
+        }
+        h2 {
+            color: #9cdcfe;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+        details {
+            background-color: #3c3c3c;
+            border: 1px solid #3c3c3c;
+            border-radius: 3px;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+        summary {
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        summary::-webkit-details-marker {
+            display: inline-block;
+        }
+        summary span:first-child {
+            margin-right: 10px;
+        }
+        p {
+            margin: 0;
+            padding-top: 10px;
+        }
+        button.generate-test-btn {
+            padding: 5px 10px;
+            background-color: #007acc;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button.generate-test-btn:hover {
+            background-color: #005a9e;
+        }
+        </style>
+        </head>
+        <body>
+        <div class="container">
+        <h1>Welcome, ${username}</h1>
+        <h2>Your assigned user stories:</h2>
+        ${userStoriesHtml}
+        </div>
+        <script>
+        const vscode = acquireVsCodeApi();
+        document.querySelectorAll('.generate-test-btn').forEach(button => {
             button.addEventListener('click', () => {
-              const tag = button.getAttribute('data-tag');
-              vscode.postMessage({
-                type: 'generateTest',
-                usTag: tag
-              });
+                const tag = button.getAttribute('data-tag');
+                vscode.postMessage({
+                    type: 'generateTest',
+                    usTag: tag
+                });
             });
-          });
-          </script>
-          </body>
-          </html>
+        });
+        </script>
+        </body>
+        </html>
         `;
     }
     
