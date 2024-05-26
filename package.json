@@ -34,17 +34,17 @@
       {
         "command": "extension.login",
         "title": "Login",
-        "category": "US EXT"
+        "category": "US-EXT"
       },
       {
         "command": "extension.generateTest",
         "title": "Generate Unit Test",
-        "category": "US EXT"
+        "category": "US-EXT"
       },
       {
         "command": "extension.runTests",
         "title": "Run Test for Workspace",
-        "category": "US EXT"
+        "category": "US-EXT"
       }
     ]
   },

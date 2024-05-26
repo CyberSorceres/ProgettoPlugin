@@ -3,17 +3,20 @@ import * as lib from 'progettolib'
 
 export class FileParser {
 	public document: vscode.TextDocument;
+	private api: lib.API_interface;
 	
-	constructor(doc: vscode.TextDocument){
+	constructor(doc: vscode.TextDocument, api: lib.API_interface){
 		this.document = doc;
+		this.api = api;
 	}
 	
-	public async ParseFile(): Promise<lib.Progetto | undefined>{
+	public async ParseFile(): Promise<[lib.Progetto | undefined, lib.UserStory[] | undefined]>{
 		
 		const projectTagRegex = /@PROJECT-(\d+)/g;
 		const initialTagRegex = /@USERSTORY-(\d+)/g;
 		const endTagRegex = /@USERSTORY-END/g;
 		let project: lib.Progetto;
+		let userStories: lib.UserStory[] = [];
 		let tagNumber: string = '';
 		
 		let loadingContent = false;
@@ -23,15 +26,16 @@ export class FileParser {
 		const firstLine = this.document.lineAt(0).text;
 		if(projectTagRegex.test(firstLine)) {
 			const projectId = firstLine.match(projectTagRegex)![0].split('-')[1];
-			project = new lib.Progetto(projectId)
-			if(project)
-				await project.fetchData(new lib.MockAPI()); //TODO switch to real API
-			else
-				return undefined;
+			project = await this.api.getProgetto(projectId);
+			if(!project){
+				vscode.window.showErrorMessage(`No Project with this id fonund: ${projectId}`);
+				return [undefined, undefined];
+			}
+
 		}
 		else {
-			vscode.window.showErrorMessage('No project tag found: the project tag must appear in the first line of the document');
-			return undefined;
+			vscode.window.showErrorMessage('No project id found: the project id must appear in the first line of the document');
+			return [undefined, undefined];
 		}
 		
 		//for each line in the file check if it contains a start tag, startting on the second line
@@ -43,7 +47,9 @@ export class FileParser {
 			switch(true) {
 				case endTagRegex.test(text): //found an END tag
 				if(loadingContent) { //if I'm already loading content, stop loading the content -> I found the end tag
-					project.getEpicStoryById('1')?.getUserStoryByTag(tagNumber)?.test.setUScode(userStoryCode);
+					//US = his.api.getUserStoryByTag(tagNumber)?.test.setUScode(userStoryCode);
+					//US.Test.SetCOde(userStoryCode);
+					//userStories.push(US);
 					loadingContent = false;
 					userStoryCode = '';
 					if(currentLineLogged === 0) {
@@ -75,7 +81,7 @@ export class FileParser {
 			
 		}
 
-		return project;
+		return [project, userStories];
 		
 	}
 }

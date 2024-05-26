@@ -3,5 +3,5 @@ export interface TestConfigInterface {
 
     createConfiguration(directory: string): void;
 
-    generateTest(): void;
+    generateTest(tag: string): void;
 }

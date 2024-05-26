@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { TestConfigInterface } from "./TestConfigInterface";
-//import { FileUtils } from './FileUtils.js';
 
 export class ViTestConfig implements TestConfigInterface{
     private configGenerated: boolean;
@@ -26,7 +25,6 @@ export class ViTestConfig implements TestConfigInterface{
     
         const viTestConfigPath = path.join(workspacePath, 'vitest.config.js');
         if (fs.existsSync(viTestConfigPath)) {
-            vscode.window.showWarningMessage('ViTest configuration already exists in the workspace.');
             return;
         }
     
@@ -49,7 +47,15 @@ export class ViTestConfig implements TestConfigInterface{
         this.configGenerated = true;
     }
 
-    generateTest(): void {
+    generateTest(UStag: string): void {
+        //TODO 
+        //If its not logged in -> show message thath you nedd to login
+        //allocate file parser
+        //[PROJ, US] = fileparser.parseFile(tag)
+        //contruct promt
+        //call bedrock or chatgpt based on progetto.AI
+
+        //write test file
         
     }
 
