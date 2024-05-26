@@ -4,18 +4,42 @@ import * as path from 'path';
 import { TestConfigInterface } from "./TestConfigInterface";
 import { userInfo } from 'os';
 import * as lib from 'progettolib'
+import { FileParser } from './FileParser';
+import { FileUtils } from './FileUtils';
 
 export class ViTestConfig implements TestConfigInterface{
     private configGenerated: boolean;
+    private dir: string;
 
-    constructor(){
+    constructor(dir: string){
         this.configGenerated = false;
+        this.dir = dir;
     }
     
     runTests(): void {
         const terminal = vscode.window.createTerminal('ViTest');
         terminal.sendText('npm test', true);
         terminal.show();
+    }
+
+    private writeTestFile(US: lib.UserStory){
+        const fileUt = new FileUtils();
+
+        const testDir = path.join(this.dir, 'TEST');
+        const fileName: string = `UserStory_${US.tag}.test.ts`;
+        const filePath = path.join(testDir, fileName);
+        if(!fileUt.folderExists(testDir)){
+            fileUt.createFolder(testDir)
+        }
+        if(!fileUt.fileExists(filePath)){
+            fileUt.createFile(filePath);
+        }
+        else{
+            fileUt.wipeFile(filePath);
+        }
+
+        fs.writeFileSync(filePath, US.test.testCode);
+
     }
 
     createConfiguration(directory: string): void {
@@ -49,40 +73,50 @@ export class ViTestConfig implements TestConfigInterface{
         this.configGenerated = true;
     }
 
-    generateTest(UStag: string, api: lib.API_interface): void {
-        if( api.loggedIn === false ){
+    async generateTest(UStag: string, api: lib.API_interface) {
+
+        //getting current open document
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active text editor');
+            return;
+        }
+    
+        const document = editor.document;
+
+
+        if(!api.loggedIn()){
             vscode.window.showErrorMessage('Cannot generate test: You are not logged in.');
         }
         else{
             let PROJ: lib.Progetto | undefined;
             let US: lib.UserStory | undefined;
-            [PROJ, US] = fileparser.parseFile(tag);
+            //[PROJ, US] = await new FileParser(document, api).parseFile(UStag);
+
+            [PROJ, US] = [lib.exampleProjects[1], lib.exampleUserStories[1]];
             
-            if(PROJ === undefined || US === undefined){
-                vscode.window.showErrorMessage('Cannot generate test: Project or UserStory not found.');
-            }
-            else{
+            if(PROJ !== undefined && US !== undefined){
+                let prompt = " generate a test file with many test for this user story, with description: " + US.description + '\nand with this code '+ US.test.UScode + 'Using Vitest.';
+                let response: string;
                 switch(PROJ.ai){
                 case lib.AI.Bedrock:
-                    let prompt = " generate a test for userStory  with description: " + US.description + US.test.UScode;
-                    api.bedrock(prompt);
+                    response = await api.bedrock(prompt);
                     break;
                 case lib.AI.ChatGPT:
                     //TODO
+                    //const response = await api.chatGPT(prompt);
+                    response = '';
                     break;
+                }
+                US.test.testCode = response;
+
+                this.writeTestFile(US);
             }
+            else{
+                vscode.window.showErrorMessage('Cannot generate test: Project or UserStory not found.');
             }
             
         }
-       
-        //TODO  
-        //If its not logged in -> show message thath you nedd to login
-        //allocate file parser
-        //[PROJ, US] = fileparser.parseFile(tag)
-        //contruct promt
-        //call bedrock or chatgpt based on progetto.AI
-
-        //write test file
         
     }
 

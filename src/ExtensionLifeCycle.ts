@@ -29,7 +29,7 @@ export class ExtensionLifeCycle {
         this._userStories = await this._api.getUserStoriesAssignedToUser();
     }
 
-    public async generateTest(tag: 'string'){
+    public async generateTest(tag: string){
         this.testConfiguration?.generateTest(tag, this.api);
     }
     
@@ -55,7 +55,7 @@ export class ExtensionLifeCycle {
                 throw new Error("Working directory is undefined");
             }
             
-            this.testConfiguration = new ViTestConfig();
+            this.testConfiguration = new ViTestConfig(this.workingDirectory);
             this.testConfiguration.createConfiguration(this.workingDirectory);
             this.commands = new ExtensionCommands(this.testConfiguration);
             
