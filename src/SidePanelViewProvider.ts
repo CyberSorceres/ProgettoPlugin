@@ -1,12 +1,16 @@
 import * as vscode from 'vscode';
 import * as lib from 'progettolib'
+import { ExtensionLifeCycle } from './ExtensionLifeCycle';
 
-export class LoginViewProvider implements vscode.WebviewViewProvider {
+export class SidePanelViewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'extension.loginView';
     private _view?: vscode.WebviewView;
     private _api?: lib.API_interface;
+    private extLifeCycle: ExtensionLifeCycle;
     
-    constructor(private readonly context: vscode.ExtensionContext) {}
+    constructor(private readonly context: vscode.ExtensionContext, extLifeCycle: ExtensionLifeCycle) {
+        this.extLifeCycle = extLifeCycle;
+    }
     
     public setApi(api: lib.API_interface){
         this._api = api;
@@ -30,8 +34,16 @@ export class LoginViewProvider implements vscode.WebviewViewProvider {
                 if (message.type === 'login') {
                     const loginSuccsessfull =  await this.callLogin(message.email, message.password);
                     if(loginSuccsessfull){
-                        webviewView.webview.html = this.getLoggedInView(webviewView.webview, lib.exampleUserStories.concat(lib.exampleUserStories), message.email);
+                        //const US = this.extLifeCycle.getUserStoriesFromDB();
+                        const userStories = lib.exampleUserStories;
+                        
+                        
+                        webviewView.webview.html = this.getLoggedInView(webviewView.webview, userStories, message.email);//TODO switch to US 
                     }
+                }
+                if(message.type === 'generateTest'){
+                    vscode.window.showInformationMessage(`Generate test for US with tag: ${message.usTag}`);
+                    this.extLifeCycle.generateTest(message.usTag);
                 }
             },
             undefined,
@@ -136,20 +148,29 @@ export class LoginViewProvider implements vscode.WebviewViewProvider {
         `;
     }
     
-    private getLoggedInView(webview: vscode.Webview, userStories: lib.UserStory[], username: string): string{
-        const userStoriesHtml = userStories.map(story => `
-        <details>
-          <summary>
-            <span style="margin-right: 10px;">
-              ${story.verified ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-times-circle"></i>'}
+    private getLoggedInView(webview: vscode.Webview, userStories: lib.UserStory[] | undefined, username: string): string{
+        let userStoriesHtml;
+
+        if (userStories === undefined) {
+            userStoriesHtml = '<p>Error loading the user stories assigned to you.</p>';
+        } else {
+            userStoriesHtml = userStories.map(story => `
+            <details>
+            <summary>
+            <span style="display: flex; justify-content: space-between; width: 100%;">
+                <span style="display: flex; align-items: center;">
+                    ${story.verified ? '<i class="fas fa-check-circle" style="color: #54d77a;"></i>' : '<i class="fas fa-times-circle" style="color: #ff694e;"></i>'}
+                    <span style="margin-left: 10px;">User Story #${story.tag}</span>
+                </span>
+                <button class="generate-test-btn" data-tag="${story.tag}">Generate Test</button>
             </span>
-            <span>User Story #${story.tag}</span>
-          </summary>
-          <p>${story.description}</p>
-        </details>
-      `).join('');
+            </summary>
+            <p>${story.description}</p>
+            </details>
+            `).join('');
+        }
     
-      return `
+        return `
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -205,7 +226,7 @@ export class LoginViewProvider implements vscode.WebviewViewProvider {
             font-weight: bold;
             display: flex;
             align-items: center;
-            list-style: none;
+            justify-content: space-between;
         }
         summary::-webkit-details-marker {
             display: inline-block;
@@ -217,6 +238,17 @@ export class LoginViewProvider implements vscode.WebviewViewProvider {
             margin: 0;
             padding-top: 10px;
         }
+        button.generate-test-btn {
+            padding: 5px 10px;
+            background-color: #007acc;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button.generate-test-btn:hover {
+            background-color: #005a9e;
+        }
         </style>
         </head>
         <body>
@@ -225,9 +257,21 @@ export class LoginViewProvider implements vscode.WebviewViewProvider {
         <h2>Your assigned user stories:</h2>
         ${userStoriesHtml}
         </div>
+        <script>
+        const vscode = acquireVsCodeApi();
+        document.querySelectorAll('.generate-test-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const tag = button.getAttribute('data-tag');
+                vscode.postMessage({
+                    type: 'generateTest',
+                    usTag: tag
+                });
+            });
+        });
+        </script>
         </body>
         </html>
-      `;
+        `;
     }
     
     private async callLogin(email: string, password: string): Promise<Boolean> {

@@ -15,7 +15,7 @@ export class ExtensionCommands {
                 testConfig.runTests();
             }),
             vscode.commands.registerCommand('extension.generateTest', () => {
-                testConfig.generateTest();
+                testConfig.generateTest('tag',this.api);//FIXME
             }),
             vscode.commands.registerCommand('extension.login', () => {
                 //api.login();

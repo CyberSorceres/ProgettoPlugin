@@ -2,7 +2,8 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { TestConfigInterface } from "./TestConfigInterface";
-//import { FileUtils } from './FileUtils.js';
+import { userInfo } from 'os';
+import * as lib from 'progettolib'
 
 export class ViTestConfig implements TestConfigInterface{
     private configGenerated: boolean;
@@ -26,7 +27,6 @@ export class ViTestConfig implements TestConfigInterface{
     
         const viTestConfigPath = path.join(workspacePath, 'vitest.config.js');
         if (fs.existsSync(viTestConfigPath)) {
-            vscode.window.showWarningMessage('ViTest configuration already exists in the workspace.');
             return;
         }
     
@@ -49,7 +49,40 @@ export class ViTestConfig implements TestConfigInterface{
         this.configGenerated = true;
     }
 
-    generateTest(): void {
+    generateTest(UStag: string, api: lib.API_interface): void {
+        if( api.loggedIn === false ){
+            vscode.window.showErrorMessage('Cannot generate test: You are not logged in.');
+        }
+        else{
+            let PROJ: lib.Progetto | undefined;
+            let US: lib.UserStory | undefined;
+            [PROJ, US] = fileparser.parseFile(tag);
+            
+            if(PROJ === undefined || US === undefined){
+                vscode.window.showErrorMessage('Cannot generate test: Project or UserStory not found.');
+            }
+            else{
+                switch(PROJ.ai){
+                case lib.AI.Bedrock:
+                    let prompt = " generate a test for userStory  with description: " + US.description + US.test.UScode;
+                    api.bedrock(prompt);
+                    break;
+                case lib.AI.ChatGPT:
+                    //TODO
+                    break;
+            }
+            }
+            
+        }
+       
+        //TODO  
+        //If its not logged in -> show message thath you nedd to login
+        //allocate file parser
+        //[PROJ, US] = fileparser.parseFile(tag)
+        //contruct promt
+        //call bedrock or chatgpt based on progetto.AI
+
+        //write test file
         
     }
 

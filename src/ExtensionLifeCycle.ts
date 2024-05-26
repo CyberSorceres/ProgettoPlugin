@@ -3,13 +3,14 @@ import * as lib from 'progettolib'
 import { ExtensionCommands } from './ExtensionCommands';
 import { TestConfigInterface } from './TestConfigInterface';
 import { ViTestConfig } from './ViTestConfig';
-import { LoginViewProvider } from './LoginViewProvider';
+import { SidePanelViewProvider } from './SidePanelViewProvider';
 
 export class ExtensionLifeCycle {
     private commands: ExtensionCommands | undefined;
     private workingDirectory: string | undefined;
     private testConfiguration: TestConfigInterface | undefined;
     private _api: lib.API_interface;
+    private _userStories: lib.UserStory[] = [];
     
     constructor(private readonly context: vscode.ExtensionContext, api: lib.API_interface) {
         this._api = api;
@@ -19,16 +20,28 @@ export class ExtensionLifeCycle {
     public get api(): lib.API_interface{
         return(this._api);
     }
+
+    public get userStories(): lib.UserStory[]{
+        return this._userStories;
+    }
+
+    public async  getUserStoriesFromDB() {
+        this._userStories = await this._api.getUserStoriesAssignedToUser();
+    }
+
+    public async generateTest(tag: 'string'){
+        this.testConfiguration?.generateTest(tag, this.api);
+    }
     
-    private showLoginPanel(context: vscode.ExtensionContext){
-        const loginViewProvider = new LoginViewProvider(this.context);
+    private showSidePanel(context: vscode.ExtensionContext){
+        const sidePanelViewProvider = new SidePanelViewProvider(this.context, this);
         
-        loginViewProvider.setApi(this.api);
+        sidePanelViewProvider.setApi(this.api);
         
         this.context.subscriptions.push(
             vscode.window.registerWebviewViewProvider(
-                LoginViewProvider.viewType,
-                loginViewProvider
+                SidePanelViewProvider.viewType,
+                sidePanelViewProvider
             )
         );    
         
@@ -46,7 +59,7 @@ export class ExtensionLifeCycle {
             this.testConfiguration.createConfiguration(this.workingDirectory);
             this.commands = new ExtensionCommands(this.testConfiguration);
             
-            this.showLoginPanel(this.context);
+            this.showSidePanel(this.context);
             
         } catch (error: unknown) {
             if (error instanceof Error) {
