@@ -95,6 +95,11 @@ export class ViTestConfig implements TestConfigInterface{
             //[PROJ, US] = await new FileParser(document, api).parseFile(UStag);
 
             [PROJ, US] = [lib.exampleProjects[1], lib.exampleUserStories[1]];
+            US.test.UScode = `
+            function sum(a: number, b: number): number {
+                return a + b;
+            }
+            `;
             
             if(PROJ !== undefined && US !== undefined){
                 let prompt = " generate a test file with many test for this user story, with description: " + US.description + '\nand with this code '+ US.test.UScode + 'Using Vitest.';
@@ -159,7 +164,11 @@ export class ViTestConfig implements TestConfigInterface{
             //await updateUserStoryStatus(userStoryId, result); Da implementare API per la modifica dello stato della UserStory dato l'ID e il nuovo stato(bool)
             vscode.window.showInformationMessage(`User story ${userStoryId} status updated to ${result ? "passato" : "non passato"}.`);
         } catch (error) {
-            vscode.window.showErrorMessage(`Failed to update user story ${userStoryId}: ${error.message}`);
+            if (error instanceof Error) {
+                vscode.window.showErrorMessage(`Failed to update user story ${userStoryId}: ${error.message}`);
+            } else {
+                vscode.window.showErrorMessage(`Failed to update user story ${userStoryId}: Unknown error`);
+            }
         }
     }
 
