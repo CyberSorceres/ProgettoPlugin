@@ -207,9 +207,11 @@ describe('Basic tests', () => {
                 console.log(`Executing command: ${command}`);
 
                 // Use options to specify the working directory
-                const options = { cwd: testFolder };
+                const options = { cwd: this.dir };
+                console.log('dir:', this.dir)
                 await new Promise<void>((resolve, reject) => {
                     exec(command, options, async (error, stdout, stderr) => {
+                        console.log('IM IN!!');
                         if (error) {
                             console.error(`Error running tests for ${file}: ${error.message}`);
                             reject(error);
