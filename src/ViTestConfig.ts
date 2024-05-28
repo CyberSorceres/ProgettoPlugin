@@ -197,71 +197,75 @@ describe('Basic tests', () => {
         const tagRegex = /UserStory_(\w+)\.test\.ts/;
         try {
             const files = await readDir(testFolder);
-    
+
             for (const file of files) {
                 const filePath: string = path.join(testFolder, file);
                 console.log(`Running tests for file: ${filePath}`);
-                
+
                 // Assuming your test command is 'npm test' followed by the file path
                 const command = `npm test ${filePath}`;
                 console.log(`Executing command: ${command}`);
-                
+
                 // Use options to specify the working directory
                 const options = { cwd: testFolder };
-                exec(command, options, async (error, stdout, stderr) => {
-                    if (error) {
-                        console.error(`Error running tests for ${file}: ${error.message}`);
-                        return;
-                    }
-                    
-                    // Log stdout and stderr for debugging
-                    console.log(`Standard output:\n${stdout}`);
-                    console.error(`Standard error:\n${stderr}`);
-                    
-                    // Assuming npm test returns 'PASS' if all tests pass
-                    const allTestsPassed = stdout.includes('PASS');
-                    console.log(`Tests passed: ${allTestsPassed}`);
-                    
-                    const match = file.match(tagRegex);
-                    let currentTag: string | null = null;
-                    if (match && match.length > 1) {
-                        currentTag = match[1];
-                    }
-                    console.log(`Current tag: ${currentTag}`);
-    
-                    if (this.project === undefined) {
-                        const editor = vscode.window.activeTextEditor;
-                        if (!editor) {
-                            vscode.window.showErrorMessage('No active text editor');
+                await new Promise<void>((resolve, reject) => {
+                    exec(command, options, async (error, stdout, stderr) => {
+                        if (error) {
+                            console.error(`Error running tests for ${file}: ${error.message}`);
+                            reject(error);
                             return;
                         }
-                        
-                        const document = editor.document;
-                        const fileParser = new FileParser(document, api)
-                        const proj = await fileParser.getProject();
-                        if (proj === undefined) {
-                            return;
+
+                        // Log stdout and stderr for debugging
+                        console.log(`Standard output:\n${stdout}`);
+                        console.error(`Standard error:\n${stderr}`);
+
+                        // Assuming npm test returns 'PASS' if all tests pass
+                        const allTestsPassed = stdout.includes('PASS');
+                        console.log(`Tests passed: ${allTestsPassed}`);
+
+                        const match = file.match(tagRegex);
+                        let currentTag: string | null = null;
+                        if (match && match.length > 1) {
+                            currentTag = match[1];
                         }
-                        this.project = proj;
-                    }
-    
-                    const userStoryOfTest = userStories.find(user => user.tag === currentTag)
-                    if (userStoryOfTest) {
-                        const userId = userStoryOfTest?.id;
-                        let state: lib.State;
-                        switch (allTestsPassed) {
-                            case true:
-                                state = lib.State.DONE;
-                                break;
-                        
-                            case false:
-                                state = lib.State.TO_DO;
-                                break;
+                        console.log(`Current tag: ${currentTag}`);
+
+                        if (this.project === undefined) {
+                            const editor = vscode.window.activeTextEditor;
+                            if (!editor) {
+                                vscode.window.showErrorMessage('No active text editor');
+                                return;
+                            }
+
+                            const document = editor.document;
+                            const fileParser = new FileParser(document, api)
+                            const proj = await fileParser.getProject();
+                            if (proj === undefined) {
+                                return;
+                            }
+                            this.project = proj;
                         }
-                        //api.setUserStoryState(this.project.id, userId, allTestsPassed);//TODO switch to state
-                        console.log(`The user story with tag: ${userStoryOfTest.tag} is passing? : ${allTestsPassed}`);
-                        vscode.window.showInformationMessage(`The user story with tag: ${userStoryOfTest.tag} is passing? : ${allTestsPassed}`);
-                    }
+
+                        const userStoryOfTest = userStories.find(user => user.tag === currentTag)
+                        if (userStoryOfTest) {
+                            const userId = userStoryOfTest?.id;
+                            let state: lib.State;
+                            switch (allTestsPassed) {
+                                case true:
+                                    state = lib.State.DONE;
+                                    break;
+
+                                case false:
+                                    state = lib.State.TO_DO;
+                                    break;
+                            }
+                            //api.setUserStoryState(this.project.id, userId, allTestsPassed);//TODO switch to state
+                            console.log(`The user story with tag: ${userStoryOfTest.tag} is passing? : ${allTestsPassed}`);
+                            vscode.window.showInformationMessage(`The user story with tag: ${userStoryOfTest.tag} is passing? : ${allTestsPassed}`);
+                        }
+                        resolve();
+                    });
                 });
             }
         } catch (err) {
