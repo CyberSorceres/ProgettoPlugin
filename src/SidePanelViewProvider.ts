@@ -34,15 +34,16 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
                 if (message.type === 'login') {
                     const loginSuccsessfull = await this.callLogin(message.email, message.password);
                     if (loginSuccsessfull) {
-                        const userStories = lib.exampleUserStories;
-                        webviewView.webview.html = this.getLoggedInView(webviewView.webview, userStories, message.email);
+                        await this.extLifeCycle.getUserStoriesFromDB();
+                        const myUserStories = this.extLifeCycle.userStories;
+                        webviewView.webview.html = this.getLoggedInView(webviewView.webview, myUserStories, message.email);
                     }
                 }
                 if (message.type === 'generateTest') {
                     this.extLifeCycle.generateTest(message.usTag);
                 }
                 if (message.type === 'syncTest') {
-                    await vscode.commands.executeCommand('yourExtension.syncTest', message.userStoryId);
+                    this.extLifeCycle.syncTest();
                 }
             },
             undefined,
@@ -145,7 +146,7 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
 
     private getLoggedInView(webview: vscode.Webview, userStories: lib.UserStory[] | undefined, username: string): string {
         let userStoriesHtml;
-
+    
         if (userStories === undefined) {
             userStoriesHtml = '<p>Error loading the user stories assigned to you.</p>';
         } else {
@@ -158,8 +159,9 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
                     <span style="margin-left: 10px;">User Story #${story.tag}</span>
                 </span>
                 <div>
-                    <button class="generate-test-btn" data-tag="${story.tag}">Generate Test</button>
-                    <button class="sync-test-btn" data-id="${story.id}">Sync Test</button>
+                    <button class="generate-test-btn" data-tag="${story.tag}">
+                        <i class="fas fa-flask"></i>
+                    </button>
                 </div>
             </span>
             </summary>
@@ -167,7 +169,7 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
             </details>
             `).join('');
         }
-
+    
         return `
         <!DOCTYPE html>
         <html lang="en">
@@ -211,6 +213,9 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
             color: #9cdcfe;
             margin-bottom: 20px;
             font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         details {
             background-color: #3c3c3c;
@@ -237,23 +242,83 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
             padding-top: 10px;
         }
         button {
-            padding: 5px 10px;
+            padding: 5px;
             background-color: #007acc;
             color: white;
             border: none;
             border-radius: 3px;
             cursor: pointer;
             margin-left: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         button:hover {
             background-color: #005a9e;
+        }
+        .generate-test-btn {
+            width: 30px;
+            height: 30px;
+            background-color: #007acc;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .generate-test-btn:hover {
+            background-color: #005a9e;
+        }
+        .sync-tests-btn {
+            width: 30px;
+            height: 30px;
+            background-color: #007acc;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .sync-tests-btn:hover {
+            background-color: #005a9e;
+        }
+        .sync-tests-btn i {
+            font-size: 1.2em;
+        }
+        .sync-tests-btn .tooltip-text {
+            visibility: hidden;
+            width: 160px;
+            background-color: black;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            top: -5px;
+            right: 105%;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .sync-tests-btn:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
         }
         </style>
         </head>
         <body>
         <div class="container">
         <h1>Welcome, ${username}</h1>
-        <h2>Your assigned user stories:</h2>
+        <h2>Your assigned user stories:
+            <button class="sync-tests-btn" title="Sync test results to DB">
+                <i class="fas fa-refresh"></i>
+            </button>
+        </h2>
         ${userStoriesHtml}
         </div>
         <script>
@@ -267,13 +332,9 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
                 });
             });
         });
-        document.querySelectorAll('.sync-test-btn').forEach(button => {
-            button.addEventListener('click', () => {
-                const id = button.getAttribute('data-id');
-                vscode.postMessage({
-                    type: 'syncTest',
-                    userStoryId: id
-                });
+        document.querySelector('.sync-tests-btn').addEventListener('click', () => {
+            vscode.postMessage({
+                type: 'syncTest'
             });
         });
         </script>
@@ -281,6 +342,17 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
         </html>
         `;
     }
+    
+        
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     private async callLogin(email: string, password: string): Promise<Boolean> {
         const loginSuccessful = await Promise.resolve(this._api?.login(email, password));

@@ -13,16 +13,6 @@ export class ExtensionCommands {
             vscode.commands.registerCommand('extension.runTests', () => {
 
                 testConfig.runTests();
-            }),
-            vscode.commands.registerCommand('extension.generateTest', () => {
-                testConfig.generateTest('tag',this.api);//FIXME
-            }),
-            vscode.commands.registerCommand('extension.login', () => {
-                //api.login();
-            }),
-
-            vscode.commands.registerCommand('extension.syncTest', () => {
-                testConfig.syncTestStatus('ID');
             })
         );
     }

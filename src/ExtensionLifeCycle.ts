@@ -26,11 +26,16 @@ export class ExtensionLifeCycle {
     }
 
     public async  getUserStoriesFromDB() {
-        this._userStories = await this._api.getUserStoriesAssignedToUser();
+        //this._userStories = await this._api.getUserStoriesAssignedToUser();//TODO
+        this._userStories = lib.exampleUserStories;
     }
 
     public async generateTest(tag: string){
         this.testConfiguration?.generateTest(tag, this.api);
+    }
+
+    public async syncTest(){
+        this.testConfiguration?.syncTestStatus(this._api, this.userStories);
     }
     
     private showSidePanel(context: vscode.ExtensionContext){
@@ -55,7 +60,7 @@ export class ExtensionLifeCycle {
                 throw new Error("Working directory is undefined");
             }
             
-            this.testConfiguration = new ViTestConfig(this.workingDirectory);
+            this.testConfiguration = new ViTestConfig(this.workingDirectory, this.api);
             this.testConfiguration.createConfiguration(this.workingDirectory);
             this.commands = new ExtensionCommands(this.testConfiguration);
             

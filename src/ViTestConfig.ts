@@ -7,12 +7,14 @@ import * as lib from 'progettolib'
 import { FileParser } from './FileParser';
 import { FileUtils } from './FileUtils';
 import { exec } from 'child_process';
+import { promisify } from 'util';
 
 export class ViTestConfig implements TestConfigInterface{
     private configGenerated: boolean;
     private dir: string;
+    private project: lib.Progetto | undefined = undefined;
 
-    constructor(dir: string){
+    constructor(dir: string, api: lib.API_interface){
         this.configGenerated = false;
         this.dir = dir;
     }
@@ -92,27 +94,58 @@ export class ViTestConfig implements TestConfigInterface{
         else{
             let PROJ: lib.Progetto | undefined;
             let US: lib.UserStory | undefined;
-            //[PROJ, US] = await new FileParser(document, api).parseFile(UStag);
+            //[PROJ, US] = [await new FileParser(document, api).parseFile(UStag);//TODO
+            const fileParser = new FileParser(document, api);
+            PROJ = await fileParser.getProject()
 
-            [PROJ, US] = [lib.exampleProjects[1], lib.exampleUserStories[1]];
-            US.test.UScode = `
-            function sum(a: number, b: number): number {
-                return a + b;
-            }
-            `;
+            US = await fileParser.parseFile(UStag);
+
+            console.log('pro:',PROJ,'\nus: ',US);
             
             if(PROJ !== undefined && US !== undefined){
+                this.project = PROJ;
+                US.test.UScode = `
+                //US.${US.tag}
+                function sum(a: number, b: number): number {
+                    return a + b;
+                }
+                `;
+                this.project = PROJ;
                 let prompt = " generate a test file with many test for this user story, with description: " + US.description + '\nand with this code '+ US.test.UScode + 'Using Vitest.';
                 let response: string;
                 switch(PROJ.ai){
                 case lib.AI.Bedrock:
-                    response = await api.bedrock(prompt);
+                    //response = await api.bedrock(prompt);
+                    response = `
+//test for US-PRO-${US.tag}
+import { describe, it, expect } from 'vitest';
+
+describe('Basic tests', () => {
+    it('should assert true is true', () => {
+        expect(true).toBe(true);
+    });
+
+    it('should assert 1 + 1 equals 2', () => {
+        expect(1 + 1).toBe(2);
+    });
+
+    it('should assert "hello" is a string', () => {
+        expect(typeof 'hello').toBe('string');
+    });
+});
+                    `;
                     break;
                 case lib.AI.ChatGPT:
                     //TODO
                     //const response = await api.chatGPT(prompt);
                     response = '';
                     break;
+                }
+
+                //console.log('here the response is:', response);
+                if(!response){
+                    vscode.window.showErrorMessage('Error while getting the response from the API');
+                    return;
                 }
                 US.test.testCode = response;
 
@@ -158,32 +191,82 @@ export class ViTestConfig implements TestConfigInterface{
 
 
     //Funzione per sincronizzare stato UserStory con DB
-    async syncTestStatus(userStoryId: string) {
+    async syncTestStatus(api: lib.API_interface, userStories: lib.UserStory[]) {
+        const readDir = promisify(fs.readdir);
+        const testFolder = path.join(this.dir, 'TEST');
+        const tagRegex = /UserStory_(\w+)\.test\.ts/;
         try {
-            const result = await this.runTestAndGetResult(userStoryId); //fa partire il test solo della user story corrispondente al bottone sync
-            //await updateUserStoryStatus(userStoryId, result); Da implementare API per la modifica dello stato della UserStory dato l'ID e il nuovo stato(bool)
-            vscode.window.showInformationMessage(`User story ${userStoryId} status updated to ${result ? "passato" : "non passato"}.`);
-        } catch (error) {
-            if (error instanceof Error) {
-                vscode.window.showErrorMessage(`Failed to update user story ${userStoryId}: ${error.message}`);
-            } else {
-                vscode.window.showErrorMessage(`Failed to update user story ${userStoryId}: Unknown error`);
+            const files = await readDir(testFolder);
+    
+            for (const file of files) {
+                const filePath: string = path.join(testFolder, file);
+                console.log(`Running tests for file: ${filePath}`);
+                
+                // Assuming your test command is 'npm test' followed by the file path
+                const command = `npm test ${filePath}`;
+                console.log(`Executing command: ${command}`);
+                
+                // Use options to specify the working directory
+                const options = { cwd: testFolder };
+                exec(command, options, async (error, stdout, stderr) => {
+                    if (error) {
+                        console.error(`Error running tests for ${file}: ${error.message}`);
+                        return;
+                    }
+                    
+                    // Log stdout and stderr for debugging
+                    console.log(`Standard output:\n${stdout}`);
+                    console.error(`Standard error:\n${stderr}`);
+                    
+                    // Assuming npm test returns 'PASS' if all tests pass
+                    const allTestsPassed = stdout.includes('PASS');
+                    console.log(`Tests passed: ${allTestsPassed}`);
+                    
+                    const match = file.match(tagRegex);
+                    let currentTag: string | null = null;
+                    if (match && match.length > 1) {
+                        currentTag = match[1];
+                    }
+                    console.log(`Current tag: ${currentTag}`);
+    
+                    if (this.project === undefined) {
+                        const editor = vscode.window.activeTextEditor;
+                        if (!editor) {
+                            vscode.window.showErrorMessage('No active text editor');
+                            return;
+                        }
+                        
+                        const document = editor.document;
+                        const fileParser = new FileParser(document, api)
+                        const proj = await fileParser.getProject();
+                        if (proj === undefined) {
+                            return;
+                        }
+                        this.project = proj;
+                    }
+    
+                    const userStoryOfTest = userStories.find(user => user.tag === currentTag)
+                    if (userStoryOfTest) {
+                        const userId = userStoryOfTest?.id;
+                        let state: lib.State;
+                        switch (allTestsPassed) {
+                            case true:
+                                state = lib.State.DONE;
+                                break;
+                        
+                            case false:
+                                state = lib.State.TO_DO;
+                                break;
+                        }
+                        //api.setUserStoryState(this.project.id, userId, allTestsPassed);//TODO switch to state
+                        console.log(`The user story with tag: ${userStoryOfTest.tag} is passing? : ${allTestsPassed}`);
+                        vscode.window.showInformationMessage(`The user story with tag: ${userStoryOfTest.tag} is passing? : ${allTestsPassed}`);
+                    }
+                });
             }
+        } catch (err) {
+            console.error('Error reading test folder:', err);
         }
     }
-
-    private async runTestAndGetResult(userStoryId: string): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            const testCommand = `npx vitest run --testNamePattern=UserStory_${userStoryId}`;
-            exec(testCommand, (error, stdout, stderr) => {
-                if (error) {
-                    vscode.window.showErrorMessage(`Error running test for user story ${userStoryId}: ${stderr}`);
-                    return reject(false);
-                }
-                // Analizzare l'output per determinare se il test è passato o fallito
-                const testPassed = stdout.includes('passed'); // Modifica questo controllo in base all'output di Vitest
-                resolve(testPassed);
-            });
-        });
-    }
+    
 }

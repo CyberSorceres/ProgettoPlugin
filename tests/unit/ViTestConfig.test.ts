@@ -5,6 +5,6 @@ import { describe, it, expect } from 'vitest';
 describe('Simple truthy test', () => {
   // Single test case
   it('should pass when true is true', () => {
-    expect(true).toBe(true); // This test will pass
+    expect(true).toBe(false); // This test will pass
   });
 });

@@ -6,5 +6,5 @@ export interface TestConfigInterface {
 
     generateTest(tag: string, api: lib.API_interface): void;
 
-    syncTestStatus(userStoryId: string): void;
+    syncTestStatus(api: lib.API_interface, userStories: lib.UserStory[]): void;
 }
