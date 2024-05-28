@@ -287,28 +287,6 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
         .sync-tests-btn:hover {
             background-color: #005a9e;
         }
-        .sync-tests-btn i {
-            font-size: 1.2em;
-        }
-        .sync-tests-btn .tooltip-text {
-            visibility: hidden;
-            width: 160px;
-            background-color: black;
-            color: #fff;
-            text-align: center;
-            border-radius: 5px;
-            padding: 5px;
-            position: absolute;
-            z-index: 1;
-            top: -5px;
-            right: 105%;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        .sync-tests-btn:hover .tooltip-text {
-            visibility: visible;
-            opacity: 1;
-        }
         </style>
         </head>
         <body>
@@ -316,7 +294,7 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
         <h1>Welcome, ${username}</h1>
         <h2>Your assigned user stories:
             <button class="sync-tests-btn" title="Sync test results to DB">
-                <i class="fas fa-refresh"></i>
+                <i class="fas fa-sync-alt"></i>
             </button>
         </h2>
         ${userStoriesHtml}
@@ -342,6 +320,7 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
         </html>
         `;
     }
+    
     
         
     
