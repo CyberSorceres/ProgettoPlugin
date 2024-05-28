@@ -1,4 +1,4 @@
-import * as lib from 'progettolib'
+import * as lib from 'progettolib';
 export interface TestConfigInterface {
     runTests(): void;
 

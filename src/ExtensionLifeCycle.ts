@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import * as lib from 'progettolib'
+import * as lib from 'progettolib';
 import { ExtensionCommands } from './ExtensionCommands';
 import { TestConfigInterface } from './TestConfigInterface';
 import { ViTestConfig } from './ViTestConfig';

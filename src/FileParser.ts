@@ -1,5 +1,5 @@
-import * as vscode from 'vscode'
-import * as lib from 'progettolib'
+import * as vscode from 'vscode';
+import * as lib from 'progettolib';
 
 export class FileParser {
 	public document: vscode.TextDocument;
@@ -71,7 +71,7 @@ export class FileParser {
 		if (foundTag && userStoryContent.length > 0) {
 			// Create a new UserStory object with the collected content
 			//userStory = this.api.getUserStoryByTag(tag);
-			const userStoryContentString = userStoryContent.join('\n')
+			const userStoryContentString = userStoryContent.join('\n');
 			userStory = lib.exampleUserStories.find(story => story.tag === tag);
 			if(!userStory){
 				return undefined;
@@ -85,7 +85,7 @@ export class FileParser {
 		}
 		
 		if(userStory){
-			console.log(`Userstory with this TAG found: ${userStory.tag}`)
+			console.log(`Userstory with this TAG found: ${userStory.tag}`);
 		}
 		return userStory;
 	}
