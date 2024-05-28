@@ -31,7 +31,7 @@ export class ExtensionLifeCycle {
     }
 
     public async generateTest(tag: string){
-        this.testConfiguration?.generateTest(tag, this.api);
+        await this.testConfiguration?.generateTest(tag, this.api);
     }
 
     public async syncTest(){

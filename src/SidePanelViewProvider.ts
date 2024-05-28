@@ -43,7 +43,11 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
                     this.extLifeCycle.generateTest(message.usTag);
                 }
                 if (message.type === 'syncTest') {
-                    this.extLifeCycle.syncTest();
+                    await this.extLifeCycle.syncTest();
+                    await this.extLifeCycle.getUserStoriesFromDB();
+                    const myUserStories = this.extLifeCycle.userStories;
+                    webviewView.webview.html = this.getLoggedInView(webviewView.webview, myUserStories, message.email);
+                    
                 }
             },
             undefined,

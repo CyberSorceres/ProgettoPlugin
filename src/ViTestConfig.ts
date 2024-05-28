@@ -2,12 +2,10 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { TestConfigInterface } from "./TestConfigInterface";
-import { userInfo } from 'os';
 import * as lib from 'progettolib';
 import { FileParser } from './FileParser';
 import { FileUtils } from './FileUtils';
 import { exec } from 'child_process';
-import { promisify } from 'util';
 
 export class ViTestConfig implements TestConfigInterface{
     private configGenerated: boolean;
@@ -117,22 +115,22 @@ export class ViTestConfig implements TestConfigInterface{
                     case lib.AI.Bedrock:
                     //response = await api.bedrock(prompt);
                     response = `
-                    //test for US-PRO-${US.tag}
-                    import { describe, it, expect } from 'vitest';
-                    
-                    describe('Basic tests', () => {
-                        it('should assert true is true', () => {
-                            expect(true).toBe(true);
-                        });
-                        
-                        it('should assert 1 + 1 equals 2', () => {
-                            expect(1 + 1).toBe(2);
-                        });
-                        
-                        it('should assert "hello" is a string', () => {
-                            expect(typeof 'hello').toBe('string');
-                        });
-                    });
+//test for US-PRO-${US.tag}
+import { describe, it, expect } from 'vitest';
+
+describe('Basic tests', () => {
+    it('should assert true is true', () => {
+        expect(true).toBe(true);
+    });
+    
+    it('should assert 1 + 1 equals 2', () => {
+        expect(1 + 1).toBe(2);
+    });
+    
+    it('should assert "hello" is a string', () => {
+        expect(typeof 'hello').toBe('string');
+    });
+});
                     `;
                     break;
                     case lib.AI.ChatGPT:
@@ -192,84 +190,111 @@ export class ViTestConfig implements TestConfigInterface{
     
     //Funzione per sincronizzare stato UserStory con DB
     async syncTestStatus(api: lib.API_interface, userStories: lib.UserStory[]) {
-        const readDir = promisify(fs.readdir);
-        const testFolder = path.join(this.dir, 'TEST');
-        const tagRegex = /UserStory_(\w+)\.test\.ts/;
-        try {
-            const files = await readDir(testFolder);
-            
-            for (const file of files) {
-                const filePath: string = path.join(testFolder, file);
-                console.log(`Running tests for file: ${filePath}`);
-                
-                // Assuming your test command is 'npm test' followed by the file path
-                const command = `
-                cd ${this.dir}
-                npm test ${filePath}`;
-                console.log(`Executing command: ${command}`);
-                
-                // Use options to specify the working directory
-                const options = { cwd: this.dir };
-                console.log('dir:', this.dir);
-                const { exec } = require('child_process');
-
-                const {stderr, stdout} = await exec(command);
-
-                const output: string = stdout.toString();
-                
-                // Log stdout and stderr for debugging
-                console.log(`Standard output:\n${stdout}`);
-                console.error(`Standard error:\n${stderr}`);
-                
-                // Assuming npm test returns 'PASS' if all tests pass
-                console.log(output);
-                const allTestsPassed = output.includes('PASS');
-                console.log(`Tests passed: ${allTestsPassed}`);
-                
-                const match = file.match(tagRegex);
-                let currentTag: string | null = null;
-                if (match && match.length > 1) {
-                    currentTag = match[1];
-                }
-                console.log(`Current tag: ${currentTag}`);
-                
-                if (this.project === undefined) {
-                    const editor = vscode.window.activeTextEditor;
-                    if (!editor) {
-                        vscode.window.showErrorMessage('No active text editor');
-                        return;
-                    }
-                    
-                    const document = editor.document;
-                    const fileParser = new FileParser(document, api);
-                    const proj = await fileParser.getProject();
-                    if (proj === undefined) {
-                        return;
-                    }
-                    this.project = proj;
-                }
-                
-                const userStoryOfTest = userStories.find(user => user.tag === currentTag);
-                if (userStoryOfTest) {
-                    const userId = userStoryOfTest?.id;
-                    let state: lib.State;
-                    switch (allTestsPassed) {
-                        case true:
-                        state = lib.State.DONE;
-                        break;
-                        
-                        case false:
-                        state = lib.State.TO_DO;
-                        break;
-                    }
-                    //api.setUserStoryState(this.project.id, userId, allTestsPassed);//TODO switch to state
-                    console.log(`The user story with tag: ${userStoryOfTest.tag} is passing? : ${allTestsPassed}`);
-                    vscode.window.showInformationMessage(`The user story with tag: ${userStoryOfTest.tag} is passing? : ${allTestsPassed}`);
-                }
+        const testFiles = this.getTestFiles();
+        
+        for(const testFile of testFiles){
+            const passing = await this.runTestOnFile(testFile);
+            if(passing === true){
+                vscode.window.showInformationMessage('Test for', testFile, 'is passing');
             }
-        } catch (err) {
-            console.error('Error reading test folder:', err);
+            else{
+                vscode.window.showInformationMessage('Test for', testFile, 'is failing');
+            }
         }
+
+        
     }
     
+    public getTestFiles(): string[]{
+        const testFileDir = path.join(this.dir,'TEST');
+        const files = fs.readdirSync(testFileDir);
+        let filelist: string[] = [];
+        files.forEach(file => {
+            const filePath = path.join(testFileDir, file); // Adjust the test file pattern if needed
+            filelist.push(filePath);
+        });
+        return filelist;
+    }
+    
+    async runTestOnFile(testFile: string): Promise<Boolean> {
+        let pass: Boolean;
+        const outputFilePath: string = `${path.dirname(testFile)}/test-output.json`;
+        const command = `npx vitest ${testFile} --reporter=json --outputFile=${outputFilePath}`;
+        const terminal = vscode.window.createTerminal('TEST');
+        
+        return new Promise((resolve, reject) => {
+
+            terminal.sendText(command, true);
+            
+            // Convert the Thenable to a Promise
+            Promise.resolve(terminal.processId)
+            .then(pid => {
+                if (!pid) {
+                    reject(new Error('Failed to get terminal process ID.'));
+                    return;
+                }
+                
+                // Function to check if the file exists
+                const checkFile = () => {
+                    if (fs.existsSync(outputFilePath)) {
+                        // Clear the interval if the file exists
+                        clearInterval(checkFileInterval);
+                        
+                        // Read the file
+                        fs.readFile(outputFilePath, 'utf8', (err, data) => {
+                            if (err) {
+                                console.error('Error reading the file:', err);
+                                return reject(err);
+                            }
+                            console.log('File contents:', data);
+                            
+                            // Parse the JSON data
+                            let jsonData;
+                            try {
+                                jsonData = JSON.parse(data);
+                            } catch (parseError) {
+                                console.error('Error parsing JSON:', parseError);
+                                return reject(parseError);
+                            }
+                            
+                            // Extract the status
+                            const status = jsonData.success ? 'passed' : 'failed';
+                            console.log(status);
+                            
+                            // Remove the file after reading
+                            fs.unlink(outputFilePath, (err) => {
+                                if (err) {
+                                    console.error('Error deleting the file:', err);
+                                    return reject(err);
+                                }
+                                console.log('File deleted successfully');
+                                resolve(true);
+                            });
+
+                            terminal.dispose();
+                            
+                            
+                            switch (status) {
+                                case 'passed':
+                                    pass = true;
+                                break;
+                                
+                                case 'failed':
+                                    pass = false;
+                                break;
+                            }
+
+                            resolve(pass);
+                        });
+                    }
+                };
+                
+                // Interval to periodically check if the file exists
+                const checkFileInterval = setInterval(checkFile, 500);
+            })
+            .catch(err => {
+                reject(err);
+            });
+        });
+    }
 }
