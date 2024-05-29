@@ -31,14 +31,14 @@ export class ExtensionLifeCycle {
     }
 
     public async generateTest(tag: string){
-        await this.testConfiguration?.generateTest(tag, this.api);
+        this.testConfiguration?.generateTest(tag, this.api);
     }
 
     public async syncTest(){
         this.testConfiguration?.syncTestStatus(this._api, this.userStories);
     }
     
-    private showSidePanel(context: vscode.ExtensionContext){
+    private showSidePanel(){
         const sidePanelViewProvider = new SidePanelViewProvider(this.context, this);
         
         sidePanelViewProvider.setApi(this.api);
@@ -55,16 +55,16 @@ export class ExtensionLifeCycle {
     private async activate(): Promise<void> {
         console.log('Activating Extension');
         try {
-            this.workingDirectory = await this.setWorkingDirectory();
+            await this.setWorkingDirectory();
             if (!this.workingDirectory) {
                 throw new Error("Working directory is undefined");
             }
             
-            this.testConfiguration = new ViTestConfig(this.workingDirectory, this.api);
+            this.testConfiguration = new ViTestConfig(this.workingDirectory);
             this.testConfiguration.createConfiguration(this.workingDirectory);
             this.commands = new ExtensionCommands(this.testConfiguration);
             
-            this.showSidePanel(this.context);
+            this.showSidePanel();
             
         } catch (error: unknown) {
             if (error instanceof Error) {
@@ -81,7 +81,7 @@ export class ExtensionLifeCycle {
         }
     }
     
-    private async setWorkingDirectory(): Promise<string | undefined> {
+    private async setWorkingDirectory(){
         const uri = await vscode.window.showOpenDialog({
             canSelectFiles: false,
             canSelectFolders: true,
@@ -90,7 +90,7 @@ export class ExtensionLifeCycle {
         });
         
         if (uri && uri.length > 0) {
-            return uri[0].fsPath;
+            this.workingDirectory =  uri[0].fsPath;
         } else {
             vscode.window.showErrorMessage('No folder selected.');
             return undefined;

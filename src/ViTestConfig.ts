@@ -8,42 +8,20 @@ import { FileUtils } from './FileUtils';
 import { exec } from 'child_process';
 
 export class ViTestConfig implements TestConfigInterface{
-    private configGenerated: boolean;
     private dir: string;
     private project: lib.Progetto | undefined = undefined;
     
-    constructor(dir: string, api: lib.API_interface){
-        this.configGenerated = false;
+    constructor(dir: string){
         this.dir = dir;
     }
     
-    runTests(): void {
+    public runTests(): void {
         const terminal = vscode.window.createTerminal('ViTest');
         terminal.sendText('npm test', true);
         terminal.show();
     }
     
-    private writeTestFile(US: lib.UserStory){
-        const fileUt = new FileUtils();
-        
-        const testDir = path.join(this.dir, 'TEST');
-        const fileName: string = `UserStory_${US.tag}.test.ts`;
-        const filePath = path.join(testDir, fileName);
-        if(!fileUt.folderExists(testDir)){
-            fileUt.createFolder(testDir);
-        }
-        if(!fileUt.fileExists(filePath)){
-            fileUt.createFile(filePath);
-        }
-        else{
-            fileUt.wipeFile(filePath);
-        }
-        
-        fs.writeFileSync(filePath, US.test.testCode);
-        
-    }
-    
-    createConfiguration(directory: string): void {
+    public createConfiguration(directory: string): void {
         const workspacePath = directory;
         if (!workspacePath) {
             vscode.window.showErrorMessage('Cannot generate ViTest configuration: Workspace not found.');
@@ -71,10 +49,9 @@ export class ViTestConfig implements TestConfigInterface{
         
         fs.writeFileSync(viTestConfigPath, viTestConfigContent);
         vscode.window.showInformationMessage('ViTest configuration generated successfully.');
-        this.configGenerated = true;
     }
     
-    async generateTest(UStag: string, api: lib.API_interface) {
+    public async generateTest(UStag: string, api: lib.API_interface) {
         
         //getting current open document
         const editor = vscode.window.activeTextEditor;
@@ -92,11 +69,13 @@ export class ViTestConfig implements TestConfigInterface{
         else{
             let PROJ: lib.Progetto | undefined;
             let US: lib.UserStory | undefined;
-            //[PROJ, US] = [await new FileParser(document, api).parseFile(UStag);//TODO
+            //[PROJ, US] = [await new FileParser(document, api).getUserSortByTag(UStag);//TODO
             const fileParser = new FileParser(document, api);
             PROJ = await fileParser.getProject();
             
-            US = await fileParser.parseFile(UStag);
+            //US = await fileParser.getUserSortByTag(UStag, PROJ.tag);
+            US = await fileParser.getUserSortByTag(UStag, 'PRO');
+            
             
             console.log('pro:',PROJ,'\nus: ',US);
             
@@ -156,8 +135,46 @@ describe('Basic tests', () => {
         }
         
     }
+
+    //Funzione per sincronizzare stato UserStory con DB
+    public async syncTestStatus(api: lib.API_interface, userStories: lib.UserStory[]) {
+        const testFiles = this.getTestFiles();
+        
+        for(const testFile of testFiles){
+            const passing = await this.runTestOnFile(testFile);
+            const testFileName = path.basename(testFile);
+            if(passing === true){
+                vscode.window.showInformationMessage('Test for ' + testFileName + ' is passing');
+            }
+            else{
+                vscode.window.showInformationMessage('Test for ' + testFileName + ' is failing');
+            }
+        }
+
+        
+    }
     
-    createPackageJson(packageJsonPath: string): void{
+    private writeTestFile(US: lib.UserStory){
+        const fileUt = new FileUtils();
+        
+        const testDir = path.join(this.dir, 'TEST');
+        const fileName: string = `UserStory_${US.tag}.test.ts`;
+        const filePath = path.join(testDir, fileName);
+        if(!fileUt.folderExists(testDir)){
+            fileUt.createFolder(testDir);
+        }
+        if(!fileUt.fileExists(filePath)){
+            fileUt.createFile(filePath);
+        }
+        else{
+            fileUt.wipeFile(filePath);
+        }
+        
+        fs.writeFileSync(filePath, US.test.testCode);
+        
+    }
+    
+    private createPackageJson(packageJsonPath: string): void{
         const packageJsonContent = `
         {
             "name": "my-project",
@@ -188,24 +205,8 @@ describe('Basic tests', () => {
     }
     
     
-    //Funzione per sincronizzare stato UserStory con DB
-    async syncTestStatus(api: lib.API_interface, userStories: lib.UserStory[]) {
-        const testFiles = this.getTestFiles();
-        
-        for(const testFile of testFiles){
-            const passing = await this.runTestOnFile(testFile);
-            if(passing === true){
-                vscode.window.showInformationMessage('Test for', testFile, 'is passing');
-            }
-            else{
-                vscode.window.showInformationMessage('Test for', testFile, 'is failing');
-            }
-        }
-
-        
-    }
     
-    public getTestFiles(): string[]{
+    private getTestFiles(): string[]{
         const testFileDir = path.join(this.dir,'TEST');
         const files = fs.readdirSync(testFileDir);
         let filelist: string[] = [];
@@ -216,7 +217,7 @@ describe('Basic tests', () => {
         return filelist;
     }
     
-    async runTestOnFile(testFile: string): Promise<Boolean> {
+    private async runTestOnFile(testFile: string): Promise<Boolean> {
         let pass: Boolean;
         const outputFilePath: string = `${path.dirname(testFile)}/test-output.json`;
         const command = `npx vitest ${testFile} --reporter=json --outputFile=${outputFilePath}`;

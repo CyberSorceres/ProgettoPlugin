@@ -3,7 +3,7 @@ import * as lib from 'progettolib';
 import { ExtensionLifeCycle } from './ExtensionLifeCycle';
 
 export class SidePanelViewProvider implements vscode.WebviewViewProvider {
-    public static readonly viewType = 'extension.loginView';
+    public static readonly viewType = 'extension.sideView';
     private _view?: vscode.WebviewView;
     private _api?: lib.API_interface;
     private extLifeCycle: ExtensionLifeCycle;
@@ -27,7 +27,7 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
             enableScripts: true
         };
 
-        webviewView.webview.html = this.getLoginView(webviewView.webview);
+        webviewView.webview.html = this.getLoginView();
 
         webviewView.webview.onDidReceiveMessage(
             async message => {
@@ -36,7 +36,7 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
                     if (loginSuccsessfull) {
                         await this.extLifeCycle.getUserStoriesFromDB();
                         const myUserStories = this.extLifeCycle.userStories;
-                        webviewView.webview.html = this.getLoggedInView(webviewView.webview, myUserStories, message.email);
+                        webviewView.webview.html = this.getLoggedInView(myUserStories, message.email);
                     }
                 }
                 if (message.type === 'generateTest') {
@@ -46,7 +46,8 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
                     await this.extLifeCycle.syncTest();
                     await this.extLifeCycle.getUserStoriesFromDB();
                     const myUserStories = this.extLifeCycle.userStories;
-                    webviewView.webview.html = this.getLoggedInView(webviewView.webview, myUserStories, message.email);
+                    webviewView.webview.html = this.getLoggedInView(myUserStories, message.email);
+                    vscode.window.showInformationMessage('The information about the User Stories has been synced!');
                     
                 }
             },
@@ -55,7 +56,7 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
         );
     }
 
-    private getLoginView(webview: vscode.Webview): string {
+    private getLoginView(): string {
         return `
         <!DOCTYPE html>
         <html lang="en">
@@ -148,7 +149,7 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
         `;
     }
 
-    private getLoggedInView(webview: vscode.Webview, userStories: lib.UserStory[] | undefined, username: string): string {
+    private getLoggedInView(userStories: lib.UserStory[] | undefined, username: string): string {
         let userStoriesHtml;
     
         if (userStories === undefined) {
@@ -160,7 +161,7 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
             <span style="display: flex; justify-content: space-between; width: 100%;">
                 <span style="display: flex; align-items: center;">
                     ${story.verified ? '<i class="fas fa-check-circle" style="color: #54d77a;"></i>' : '<i class="fas fa-times-circle" style="color: #ff694e;"></i>'}
-                    <span style="margin-left: 10px;">User Story #${story.tag}</span>
+                    <span style="margin-left: 10px;">User Story #PROG1-${story.tag}</span>
                 </span>
                 <div>
                     <button class="generate-test-btn" data-tag="${story.tag}">
@@ -325,18 +326,6 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
         `;
     }
     
-    
-        
-    
-    
-    
-    
-    
-    
-    
-    
-    
-
     private async callLogin(email: string, password: string): Promise<Boolean> {
         const loginSuccessful = await Promise.resolve(this._api?.login(email, password));
 

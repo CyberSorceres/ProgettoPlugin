@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as lib from 'progettolib';
 
 export class FileParser {
-	public document: vscode.TextDocument;
+	private document: vscode.TextDocument;
 	private api: lib.API_interface;
 	
 	constructor(doc: vscode.TextDocument, api: lib.API_interface){
@@ -12,7 +12,7 @@ export class FileParser {
 	
 	public async getProject(): Promise<lib.Progetto | undefined> {
 		let project: lib.Progetto | undefined;
-		const projectTagRegex = /@PROJECT-([A-Za-z0-9]+)/;
+		const projectTagRegex = /\/\/@PROJECT-([A-Za-z0-9]+)/;
 		const firstLine = this.document.lineAt(0).text;
 		console.log(`line: ${firstLine}`);
 		const projectMatch = firstLine.match(projectTagRegex);
@@ -36,12 +36,12 @@ export class FileParser {
 	}
 	
 	
-	public async parseFile(tag: string): Promise<lib.UserStory | undefined> {
+	public async getUserSortByTag(userTag: string, projectTag: string): Promise<lib.UserStory | undefined> {
 		const pro = this.getProject();
 		//const projectTag = pro.tag;
-		const projectTag = 'PRO';//FIXME
-		const initialTagRegex = new RegExp(`@USERSTORY-${projectTag}-${tag}`, 'g');
-		const endTagRegex = /@USERSTORY-END/g;
+		//const projectTag = 'PRO';//FIXME
+		const initialTagRegex = new RegExp(`\/\/@USERSTORY-${projectTag}-${userTag}`, 'g');
+		const endTagRegex = /\/\/@USERSTORY-END/g;
 		
 		let userStory: lib.UserStory | undefined;
 		let foundTag = false;
@@ -72,7 +72,7 @@ export class FileParser {
 			// Create a new UserStory object with the collected content
 			//userStory = this.api.getUserStoryByTag(tag);
 			const userStoryContentString = userStoryContent.join('\n');
-			userStory = lib.exampleUserStories.find(story => story.tag === tag);
+			userStory = lib.exampleUserStories.find(story => story.tag === userTag);
 			if(!userStory){
 				return undefined;
 			}
@@ -81,7 +81,7 @@ export class FileParser {
 			userStory.test.UScode = userStoryContentString;
 			
 		} else {
-			vscode.window.showErrorMessage(`User story with tag ${tag} not found in the document.`);
+			vscode.window.showErrorMessage(`User story with tag ${userTag} not found in the document.`);
 		}
 		
 		if(userStory){

@@ -1,6 +1,6 @@
 {
   "name": "progettoplugin",
-  "displayName": "ProgettoPlugin",
+  "displayName": "User Story Crafter Extension",
   "description": "",
   "icon": "./resources/icon.png",
   "version": "0.0.1",
@@ -16,7 +16,7 @@
       "activitybar": [
         {
           "id": "extension-views",
-          "title": "User Story Extension",
+          "title": "User Story Crafter Extension",
           "icon": "./resources/icon.svg"
         }
       ]
@@ -25,28 +25,11 @@
       "extension-views": [
         {
           "type": "webview",
-          "id": "extension.loginView",
+          "id": "extension.sideView",
           "name": ""
         }
       ]
-    },
-    "commands": [
-      {
-        "command": "extension.login",
-        "title": "Login",
-        "category": "US-EXT"
-      },
-      {
-        "command": "extension.generateTest",
-        "title": "Generate Unit Test",
-        "category": "US-EXT"
-      },
-      {
-        "command": "extension.runTests",
-        "title": "Run Test for Workspace",
-        "category": "US-EXT"
-      }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
