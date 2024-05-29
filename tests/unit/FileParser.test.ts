@@ -1,5 +1,5 @@
 import { test, describe, beforeEach, expect} from 'vitest';
-import { FileParser } from '../../src/FileParser'
+import { FileParser } from '../../src/FileParser';
 import * as lib from 'progettolib'; // Update with your library imports
 
 // Simple test suite
@@ -33,7 +33,7 @@ const goodTextDocumentMock: vscode.TextDocument = {
 
 
 
-describe('ParseFile', () => {
+describe('getUserSortByTag', () => {
     let goodParser: FileParser;
     
     beforeEach(() => {
@@ -48,7 +48,7 @@ describe('ParseFile', () => {
     
     // Test case 2
     test('should return the project object if parsing is successful', async () => {
-        let progetto: lib.Progetto | undefined = await goodParser.ParseFile();
+        let progetto: lib.Progetto | undefined = await goodParser.getUserSortByTag();
 
         expect(progetto).toEqual(new lib.Progetto('0', 'name', true, ['1'], lib.AI.Bedrock));
     });

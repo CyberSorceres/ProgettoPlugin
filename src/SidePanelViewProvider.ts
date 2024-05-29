@@ -1,60 +1,62 @@
 import * as vscode from 'vscode';
-import * as lib from 'progettolib'
+import * as lib from 'progettolib';
 import { ExtensionLifeCycle } from './ExtensionLifeCycle';
 
 export class SidePanelViewProvider implements vscode.WebviewViewProvider {
-    public static readonly viewType = 'extension.loginView';
+    public static readonly viewType = 'extension.sideView';
     private _view?: vscode.WebviewView;
     private _api?: lib.API_interface;
     private extLifeCycle: ExtensionLifeCycle;
-    
+
     constructor(private readonly context: vscode.ExtensionContext, extLifeCycle: ExtensionLifeCycle) {
         this.extLifeCycle = extLifeCycle;
     }
-    
-    public setApi(api: lib.API_interface){
+
+    public setApi(api: lib.API_interface) {
         this._api = api;
     }
-    
+
     public resolveWebviewView(
         webviewView: vscode.WebviewView,
         context: vscode.WebviewViewResolveContext,
         _token: vscode.CancellationToken
     ): void {
         this._view = webviewView;
-        
+
         webviewView.webview.options = {
             enableScripts: true
         };
-        
-        webviewView.webview.html = this.getLoginView(webviewView.webview);
-        
+
+        webviewView.webview.html = this.getLoginView();
+
         webviewView.webview.onDidReceiveMessage(
             async message => {
                 if (message.type === 'login') {
-                    const loginSuccsessfull =  await this.callLogin(message.email, message.password);
-                    if(loginSuccsessfull){
-                        //const US = this.extLifeCycle.getUserStoriesFromDB();
-                        const userStories = lib.exampleUserStories;
-                        
-                        
-                        webviewView.webview.html = this.getLoggedInView(webviewView.webview, userStories, message.email);//TODO switch to US 
+                    const loginSuccsessfull = await this.callLogin(message.email, message.password);
+                    if (loginSuccsessfull) {
+                        await this.extLifeCycle.getUserStoriesFromDB();
+                        const myUserStories = this.extLifeCycle.userStories;
+                        webviewView.webview.html = this.getLoggedInView(myUserStories, message.email);
                     }
                 }
-                if(message.type === 'generateTest'){
+                if (message.type === 'generateTest') {
                     this.extLifeCycle.generateTest(message.usTag);
+                }
+                if (message.type === 'syncTest') {
+                    await this.extLifeCycle.syncTest();
+                    await this.extLifeCycle.getUserStoriesFromDB();
+                    const myUserStories = this.extLifeCycle.userStories;
+                    webviewView.webview.html = this.getLoggedInView(myUserStories, message.email);
+                    vscode.window.showInformationMessage('The information about the User Stories has been synced!');
+                    
                 }
             },
             undefined,
             this.context.subscriptions
         );
     }
-    
-    /* private getHtmlForWebview(webview: vscode.Webview): string {
-        
-    } */
-    
-    private getLoginView(webview: vscode.Webview): string{
+
+    private getLoginView(): string {
         return `
         <!DOCTYPE html>
         <html lang="en">
@@ -146,10 +148,10 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
         </html>
         `;
     }
-    
-    private getLoggedInView(webview: vscode.Webview, userStories: lib.UserStory[] | undefined, username: string): string{
-        let userStoriesHtml;
 
+    private getLoggedInView(userStories: lib.UserStory[] | undefined, username: string): string {
+        let userStoriesHtml;
+    
         if (userStories === undefined) {
             userStoriesHtml = '<p>Error loading the user stories assigned to you.</p>';
         } else {
@@ -159,9 +161,13 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
             <span style="display: flex; justify-content: space-between; width: 100%;">
                 <span style="display: flex; align-items: center;">
                     ${story.verified ? '<i class="fas fa-check-circle" style="color: #54d77a;"></i>' : '<i class="fas fa-times-circle" style="color: #ff694e;"></i>'}
-                    <span style="margin-left: 10px;">User Story #${story.tag}</span>
+                    <span style="margin-left: 10px;">User Story #PROG1-${story.tag}</span>
                 </span>
-                <button class="generate-test-btn" data-tag="${story.tag}">Generate Test</button>
+                <div>
+                    <button class="generate-test-btn" data-tag="${story.tag}">
+                        <i class="fas fa-flask"></i>
+                    </button>
+                </div>
             </span>
             </summary>
             <p>${story.description}</p>
@@ -212,6 +218,9 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
             color: #9cdcfe;
             margin-bottom: 20px;
             font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         details {
             background-color: #3c3c3c;
@@ -237,15 +246,50 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
             margin: 0;
             padding-top: 10px;
         }
-        button.generate-test-btn {
-            padding: 5px 10px;
+        button {
+            padding: 5px;
             background-color: #007acc;
             color: white;
             border: none;
             border-radius: 3px;
             cursor: pointer;
+            margin-left: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        button.generate-test-btn:hover {
+        button:hover {
+            background-color: #005a9e;
+        }
+        .generate-test-btn {
+            width: 30px;
+            height: 30px;
+            background-color: #007acc;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .generate-test-btn:hover {
+            background-color: #005a9e;
+        }
+        .sync-tests-btn {
+            width: 30px;
+            height: 30px;
+            background-color: #007acc;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .sync-tests-btn:hover {
             background-color: #005a9e;
         }
         </style>
@@ -253,7 +297,11 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
         <body>
         <div class="container">
         <h1>Welcome, ${username}</h1>
-        <h2>Your assigned user stories:</h2>
+        <h2>Your assigned user stories:
+            <button class="sync-tests-btn" title="Sync test results to DB">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </h2>
         ${userStoriesHtml}
         </div>
         <script>
@@ -267,6 +315,11 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
                 });
             });
         });
+        document.querySelector('.sync-tests-btn').addEventListener('click', () => {
+            vscode.postMessage({
+                type: 'syncTest'
+            });
+        });
         </script>
         </body>
         </html>
@@ -274,22 +327,18 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
     }
     
     private async callLogin(email: string, password: string): Promise<Boolean> {
-        
-        const loginSuccessful = await Promise.resolve(this._api?.login(email,password));
-        
-        if(loginSuccessful){
+        const loginSuccessful = await Promise.resolve(this._api?.login(email, password));
+
+        if (loginSuccessful) {
             vscode.window.showInformationMessage('Logged in correctly');
             return true;
-            
             //TODO
             //hide login panel
             //show user name
             //show user story list
-        }
-        else{
+        }else{
             vscode.window.showErrorMessage('Error during login, please try again');
             return false;
         }
     }
-    
 }

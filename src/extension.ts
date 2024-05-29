@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import * as lib from 'progettolib'
+import * as lib from 'progettolib';
 import { ExtensionLifeCycle } from './ExtensionLifeCycle';
 
 let extensionLifeCycle: ExtensionLifeCycle | undefined;

@@ -60,20 +60,4 @@ export class FileUtils {
             console.error(`Error wiping file: ${error}`);
         }
     }
-
-    /*public getActiveFilename(): string | undefined{
-        const editor = vscode.window.activeTextEditor;
-        if (editor) {
-            // Get the URI of the currently open file
-            const uri = editor.document.uri;
-            // Get the base name (name without path) of the file
-            const fileName = vscode.workspace.asRelativePath(uri);
-            // Remove the file extension
-            const fileNameWithoutExtension = fileName.replace(/\.[^/.]+$/, "");
-            return fileNameWithoutExtension;
-        } else {
-            // No file is currently open
-            return undefined;
-        }
-    }*/
 }
