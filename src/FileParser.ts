@@ -36,10 +36,12 @@ export class FileParser {
 	}
 	
 	
-	public async getUserSortByTag(userTag: string, projectTag: string): Promise<lib.UserStory | undefined> {
-		const pro = this.getProject();
-		//const projectTag = pro.tag;
-		//const projectTag = 'PRO';//FIXME
+	public async getUserSortByTag(userTag: string): Promise<lib.UserStory | undefined> {
+		const pro = await this.getProject();
+		if(pro === undefined){
+			return undefined;
+		}
+		const projectTag = pro.tag;
 		const initialTagRegex = new RegExp(`\/\/@USERSTORY-${projectTag}-${userTag}`, 'g');
 		const endTagRegex = /\/\/@USERSTORY-END/g;
 		
@@ -69,10 +71,9 @@ export class FileParser {
 		}
 		
 		if (foundTag && userStoryContent.length > 0) {
-			// Create a new UserStory object with the collected content
-			//userStory = this.api.getUserStoryByTag(tag);
 			const userStoryContentString = userStoryContent.join('\n');
 			userStory = lib.exampleUserStories.find(story => story.tag === userTag);
+			//userStory = this.api.getUserStoryByTag(tag);
 			if(!userStory){
 				return undefined;
 			}

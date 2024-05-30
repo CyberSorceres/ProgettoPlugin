@@ -160,7 +160,7 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
             <summary>
             <span style="display: flex; justify-content: space-between; width: 100%;">
                 <span style="display: flex; align-items: center;">
-                    ${story.verified ? '<i class="fas fa-check-circle" style="color: #54d77a;"></i>' : '<i class="fas fa-times-circle" style="color: #ff694e;"></i>'}
+                    ${story.state === lib.State.DONE ? '<i class="fas fa-check-circle" style="color: #54d77a;"></i>' : '<i class="fas fa-times-circle" style="color: #ff694e;"></i>'}
                     <span style="margin-left: 10px;">User Story #PROG1-${story.tag}</span>
                 </span>
                 <div>
@@ -332,10 +332,6 @@ export class SidePanelViewProvider implements vscode.WebviewViewProvider {
         if (loginSuccessful) {
             vscode.window.showInformationMessage('Logged in correctly');
             return true;
-            //TODO
-            //hide login panel
-            //show user name
-            //show user story list
         }else{
             vscode.window.showErrorMessage('Error during login, please try again');
             return false;

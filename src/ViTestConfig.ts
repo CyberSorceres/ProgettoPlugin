@@ -69,12 +69,11 @@ export class ViTestConfig implements TestConfigInterface{
         else{
             let PROJ: lib.Progetto | undefined;
             let US: lib.UserStory | undefined;
-            //[PROJ, US] = [await new FileParser(document, api).getUserSortByTag(UStag);//TODO
             const fileParser = new FileParser(document, api);
             PROJ = await fileParser.getProject();
             
-            //US = await fileParser.getUserSortByTag(UStag, PROJ.tag);
-            US = await fileParser.getUserSortByTag(UStag, 'PRO');
+            //US = await fileParser.getUserSortByTag(UStag, PROJ.tag);//TODO
+            US = await fileParser.getUserSortByTag(UStag);
             
             
             console.log('pro:',PROJ,'\nus: ',US);

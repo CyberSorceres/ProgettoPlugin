@@ -26,8 +26,13 @@ export class ExtensionLifeCycle {
     }
 
     public async  getUserStoriesFromDB() {
-        //this._userStories = await this._api.getUserStoriesAssignedToUser();//TODO
-        this._userStories = lib.exampleUserStories;
+        try {
+            this._userStories = await this._api.getUserStoriesAssignedToUser();
+            
+        } catch (error) {
+            vscode.window.showErrorMessage(`An error occurred while trying to get your assigned userstories: ${error}`);
+            
+        }
     }
 
     public async generateTest(tag: string){
